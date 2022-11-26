@@ -41,7 +41,7 @@ class RegisterMdGeneratorHelper:
     def md_table(self, rows):
         
         cols = zip(*rows)
-        widths = [max([len(cell)+2 for cell in col]) for col in cols]
+        widths = [max([len(str(cell))+2 for cell in col]) for col in cols]
 
         def print_row(row):
             line = []
@@ -85,10 +85,13 @@ class RegisterMdGeneratorHelper:
         md.append('---------')
         md.append('')
 
-        table = [['Address', 'Absolute Address', 'Name', 'Description', 'Access', 'Hardware']]
+        table = [['Rel. Offset', 'Abs. Address', 'Name', 'Description', 'Access', 'Hardware', 'Comments']]
+        comments = []
         for reg in self.registers.registers:
+            
             addr = self.reg_addresses[reg.name]
             abs_addr = addr + self.registers.base_address
+            
             if reg.regtype == RegType.Write:
                 typ, hw = 'Write-Only', 'Out'
             elif reg.regtype == RegType.Read:
@@ -101,8 +104,21 @@ class RegisterMdGeneratorHelper:
                 typ, hw = 'Strobe', 'Output'
             else:
                 raise ValueError()
-            table.append([f'0x{addr:08X}', f'0x{abs_addr:08X}', reg.name, reg.description, typ, hw])
+
+            if reg.comment is None:
+                com = ''
+            else:
+                comments.append(reg.comment)
+                com = len(comments)
+            
+            table.append([f'0x{addr:08X}', f'0x{abs_addr:08X}', reg.name, reg.description, typ, hw, com])
+
         md.extend(self.md_table(table))
+
+        if len(comments) > 0:
+            md.append('')
+            for i,c in enumerate(comments):
+                md.append(f'{i+1}. {c}')
 
 
         md.append('')
@@ -130,11 +146,12 @@ class RegisterMdGeneratorHelper:
                 md.append('This register is read-only. It latches changes.')
             elif reg.regtype == RegType.Strobe or reg.regtype == RegType.Handshake:
                 md.append('This register is write-only. It only sends triggers to the hardware.')
-            if reg.write_event != 0:
+            if reg.write_event != 0 and reg.write_event is not None:
                 md.append('Writing to this register triggers the hardware.')
             md.append('')
             
-            table = [['Bits', 'Name', 'Description', 'Default', 'Access', 'Specials']]
+            table = [['Bits', 'Name', 'Description', 'Default', 'Access', 'Specials', 'Comments']]
+            comments = []
             for field in reg.fields:
                 
                 if len(field.bits) == 1:
@@ -181,8 +198,19 @@ class RegisterMdGeneratorHelper:
                         specials.append('Trigger on ' + '/'.join(events))
                 special = ', '.join(specials)
 
-                table.append([bits, field.name, field.description, default, access, special])
+                if field.comment is None:
+                    com = ''
+                else:
+                    comments.append(field.comment)
+                    com = len(comments)
+
+                table.append([bits, field.name, field.description, default, access, special, com])
             md.extend(self.md_table(table))
+
+            if len(comments) > 0:
+                md.append('')
+                for i,c in enumerate(comments):
+                    md.append(f'{i+1}. {c}')
 
         md.append('')
 

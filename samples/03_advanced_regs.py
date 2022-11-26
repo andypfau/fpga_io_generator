@@ -62,5 +62,5 @@ if __name__ == '__main__':
     RegisterCGenerator(regset, NAME).save(
         filename_header=f'{NAME}.h',
         filename_code=f'{NAME}.c')
-    RegisterPyGenerator(regset, 'MyRegisters').save(f'{NAME}_object.py')
+    RegisterPyGenerator(regset, 'MyRegisters').save(f'{NAME}.py')
     RegisterMdGenerator(regset, 'My Registers').save(f'{NAME}.md')

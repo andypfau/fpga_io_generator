@@ -279,7 +279,7 @@ class RegisterSvGeneratorHelper:
                     for bit_offset in range(f_lo, f_hi+1):
                         mask = 1 << bit_offset
                         if bits_in_use & mask != 0:
-                            raise RuntimeError(f'{reg.name}{field.name} overlaps with other fields')
+                            raise RuntimeError(f'Field {reg.name}.{field.name} overlaps with other fields')
                         bits_in_use |= mask
 
                     bytewise = write or self.is_event(reg.regtype)
@@ -289,7 +289,7 @@ class RegisterSvGeneratorHelper:
                         bit_ranges = [(self.registers.port_size-1,0)]
 
                     if f_hi >= self.registers.port_size:
-                        raise Exception(f'{reg.name}{field.name} is wider than the bus')
+                        raise Exception(f'Field {reg.name}.{field.name} is wider than the register size')
                     
                     regname = self.get_varname(reg, field, VarnameType.Register)
                     
