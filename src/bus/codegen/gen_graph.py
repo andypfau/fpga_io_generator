@@ -6,6 +6,7 @@ if TYPE_CHECKING:
 
 from sys import maxsize
 from graphviz import Graph, Digraph
+import os
 
 
 class BusGraphGenerator:
@@ -14,6 +15,30 @@ class BusGraphGenerator:
         self.bus = bus
         self.filename = filename
         self.update()
+    
+
+    def get_graph(self) -> Graph:
+        """Returns the Graphc as a graphviz object"""
+
+        return self.graph
+    
+
+    def save(self, filename: str = None, render: bool = True):
+        """
+        Saves the graph to a file.
+        filename:  Target file
+        render:    If True, a graphic is created. The format depends on the file extension of
+            filename, e.g. ".pdf" or ".png". If False, the raw dot-file (graphviz format)
+            is saved instead.
+        """
+
+        if render:
+            path_only, ext = os.path.splitext(filename)
+            format = ext[1:] # remove the dot
+            self.graph.render(path_only, cleanup=True, format=format)
+        else:
+            self.graph.save(filename)
+
     
     def update(self):
 

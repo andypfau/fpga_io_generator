@@ -14,6 +14,24 @@ class BusSvGenerator:
         self.module_name = module_name
         self.update()
     
+
+    def get_instance_template_code(self) -> str:
+        return self.instance
+    
+
+    def get_code(self) -> str:
+        return self.implementation
+    
+
+    def save(self, filename_code: str = None, filename_instance_template: str = None):
+        if filename_code is not None:
+            with open(filename_code, 'w') as fp:
+                fp.write(self.get_code())
+        if filename_instance_template is not None:
+            with open(filename_instance_template, 'w') as fp:
+                fp.write(self.get_instance_template_code())
+                
+    
     def update(self):
         
         from ..structure.types import WbBusTopology
