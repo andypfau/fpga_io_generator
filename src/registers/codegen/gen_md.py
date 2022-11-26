@@ -36,6 +36,35 @@ class RegisterMdGeneratorHelper:
         
         self.reg_addresses = get_register_addresses(self.registers)
         self.generate()
+    
+
+    def md_table(self, rows):
+        
+        cols = zip(*rows)
+        widths = [max([len(cell)+2 for cell in col]) for col in cols]
+
+        def print_row(row):
+            line = []
+            for width,cell in zip(widths, row):
+                s = ' ' + str(cell) + ' '
+                while len(s) < width:
+                    s += ' '
+                line.append(s)
+            return '|' + '|'.join(line) + '|'
+
+        def print_separator_row():
+            line = []
+            for width in widths:
+                line.append('-'*width)
+            return '|' + '|'.join(line) + '|'
+
+        md = []
+        for i, row in enumerate(rows):
+            md.append(print_row(row))
+            if i==0:
+                md.append(print_separator_row())
+
+        return md
 
 
     def generate(self):
@@ -48,15 +77,15 @@ class RegisterMdGeneratorHelper:
         md.append(f'Base address is 0x{self.registers.base_address:08X}.')
         md.append('')
         md.append(f'All registers are {self.registers.port_size} bit wide, granularity is 8 bit')
-        md.append('')
-        md.append('')
 
 
+        md.append('')
+        md.append('')
         md.append('Registers')
         md.append('---------')
         md.append('')
-        md.append('| Address  | Absolute Address | Name      | Description       | Access    | Hardware      |')
-        md.append('|--------- |------------------|-----------|-------------------|-----------|---------------|')
+
+        table = [['Address', 'Absolute Address', 'Name', 'Description', 'Access', 'Hardware']]
         for reg in self.registers.registers:
             addr = self.reg_addresses[reg.name]
             abs_addr = addr + self.registers.base_address
@@ -72,16 +101,18 @@ class RegisterMdGeneratorHelper:
                 typ, hw = 'Strobe', 'Output'
             else:
                 raise ValueError()
-            md.append(f'| 0x{addr:08X}  |  0x{abs_addr:08X}  | {reg.name}  | {reg.description}  | {typ}  | {hw}  |')
-        md.append('')
-        md.append('')
+            table.append([f'0x{addr:08X}', f'0x{abs_addr:08X}', reg.name, reg.description, typ, hw])
+        md.extend(self.md_table(table))
 
 
+        md.append('')
+        md.append('')
         md.append('Register Fields')
         md.append('---------------')
-        md.append('')
         for reg in self.registers.registers:
             
+            md.append('')
+            md.append('')
             md.append(f'### {reg.description}')
             md.append('')
 
@@ -103,9 +134,7 @@ class RegisterMdGeneratorHelper:
                 md.append('Writing to this register triggers the hardware.')
             md.append('')
             
-            md.append('| Bits | Name      | Description       | Default | Access    | Specials      |')
-            md.append('|------|-----------|-------------------|---------|-----------|---------------|')
-
+            table = [['Bits', 'Name', 'Description', 'Default', 'Access', 'Specials']]
             for field in reg.fields:
                 
                 if len(field.bits) == 1:
@@ -152,7 +181,9 @@ class RegisterMdGeneratorHelper:
                         specials.append('Trigger on ' + '/'.join(events))
                 special = ', '.join(specials)
 
-                md.append(f'| {bits}  | {field.name}  | {field.description}  | {default}   | {access}   | {special}   |')
+                table.append([bits, field.name, field.description, default, access, special])
+            md.extend(self.md_table(table))
+
         md.append('')
 
         
