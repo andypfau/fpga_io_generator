@@ -7,7 +7,7 @@ from src.registers.codegen import RegisterSvGenerator, RegisterPyGenerator, Regi
 
 if __name__ == '__main__':
 
-    NAME = demo_output_folder() + '/03_advanced_regs'
+    NAME = demo_output_folder() + '/01-03_advanced_regs'
     prepare_output_folder()
 
 
