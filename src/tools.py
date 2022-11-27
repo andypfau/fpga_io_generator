@@ -82,3 +82,18 @@ def md_table(rows: "list[list[any]]") -> str:
             md.append(print_separator_row())
 
     return md
+
+
+def binary_si(n: int, unit: str = '') -> str:
+    prefix, factor = '', 1
+    for e,p in [(4,'Ti'), (3,'Gi'), (2,'Mi'), (1,'ki')]:
+        f = pow(2, 10*e)
+        if n > f:
+            prefix, factor = p, f
+            break
+    num = str(round(n//factor))
+    suffix = prefix + unit
+    if len(suffix) == 0:
+        return num
+    else:
+        return f'{num} {suffix}'

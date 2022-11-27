@@ -28,11 +28,11 @@ class WbNode:
         - then this method would return (2,5)
         """
         lo = int(math.ceil(math.log2(component.port_size//component.granularity)))
-        return lo+component.available_address_bits-1, lo
+        return lo, lo+component.address_size-1
 
 
-    def get_sel_bits(component):
-        return component.port_size//component.granularity-1, 0
+    def get_sel_bit_count(component):
+        return component.port_size//component.granularity
 
 
 

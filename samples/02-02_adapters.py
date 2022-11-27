@@ -18,4 +18,4 @@ if __name__ == '__main__':
 
         BusSvGenerator(b, 'my_bus').save(filename_code=f'{NAME}_{mw}-{sw}.sv')
         BusGraphGenerator(b).save(f'{NAME}_{mw}-{sw}.png')
-        BusMdGenerator(b).save(f'{NAME}.md')
+        BusMdGenerator(b).save(f'{NAME}_{mw}-{sw}.md')

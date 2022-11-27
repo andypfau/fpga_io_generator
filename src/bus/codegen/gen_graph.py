@@ -6,12 +6,15 @@ from graphviz import Graph, Digraph
 import os
 
 
+
 class BusGraphGenerator:
 
     def __init__(self, bus: 'WbBus', filename: str = 'wb_bus.gv'):
         self.bus = bus
         self.filename = filename
-        self.update()
+        
+        gen = BusGraphGeneratorHelper(bus, filename)
+        self.graph = gen.graph
     
 
     def get_graph(self) -> Graph:
@@ -35,6 +38,26 @@ class BusGraphGenerator:
             self.graph.render(path_only, cleanup=True, format=format)
         else:
             self.graph.save(filename)
+
+
+
+class BusGraphGeneratorHelper:
+
+
+    def __init__(self, bus: 'WbBus', filename: str):
+        self.bus = bus
+        self.filename = filename
+
+        self.check()
+        self.update()
+    
+
+    def check(self):
+        
+        if len(self.bus.slaves) != len(set([s.name for s in self.bus.slaves])):
+            raise RuntimeError(f'Slave names must be unique')
+        if len(self.bus.masters) != len(set([m.name for m in self.bus.masters])):
+            raise RuntimeError(f'Master names must be unique')
 
     
     def update(self):
@@ -77,16 +100,15 @@ class BusGraphGenerator:
         g.attr('node', shape='circle')
         if (self.bus.topology == WbBusTopology.SharedBus):
             if len(self.bus.masters)==1 and len(self.bus.slaves)==1:
-                mb_name = 'Bus'
-                sb_name = 'Bus'
+                mb_name = sb_name = 'Bus'
                 g.attr('node', label='Bus')
                 g.node(mb_name)
             elif len(self.bus.masters)==1 and len(self.bus.slaves)>1:
-                mb_name = 'Demux'
+                mb_name = sb_name = 'Demux'
                 g.attr('node', label=f'Demux\n{bus_port_size}/{bus_granularity}')
                 g.node(mb_name)
             elif len(self.bus.masters)>1 and len(self.bus.slaves)==1:
-                mb_name = 'Arbiter'
+                mb_name = sb_name = 'Arbiter'
                 g.attr('node', label=f'Arbiter\n{bus_port_size}/{bus_granularity}')
                 g.node(mb_name)
             else:
@@ -115,6 +137,7 @@ class BusGraphGenerator:
                 id_adapter = m_id(master) + '_adapter'
                 g.edge(m_id(master), id_adapter)
                 g.edge(id_adapter, mb_name, taillabel=m_label(master))
+        
         for slave in self.bus.slaves:
             if slave.port_size==bus_port_size and slave.granularity==bus_granularity:
                 g.edge(sb_name, m_id(slave), headlabel=s_label(slave))
