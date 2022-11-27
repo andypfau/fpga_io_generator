@@ -1,8 +1,5 @@
 from ..tools import *
-
-from typing import TYPE_CHECKING
-if TYPE_CHECKING:
-    from ..structure.types import WbBus, WbMaster, WbSlave
+from ..structure.types import WbBus, WbMaster, WbSlave
 
 from sys import maxsize
 from graphviz import Graph, Digraph

@@ -1,14 +1,9 @@
 from ...tools import clog2
 
-from typing import TYPE_CHECKING
-if TYPE_CHECKING:
-    from ..codegen.gen_sv import RegisterSvGenerator
-    from ..codegen.gen_py import RegisterPyGenerator
-    from ..codegen.gen_c import RegisterCGenerator
-
 import dataclasses
 import enum
 import math
+
 
 
 class FieldType(enum.Enum):
@@ -24,12 +19,14 @@ class FieldType(enum.Enum):
     Strobe = enum.auto()
 
 
+
 class FieldChangeType(enum.Flag):
     Rising = 1
     Falling = 2
     High = 4
     Low = 8
     AnyChange = 3
+
 
 
 class FieldFunction(enum.Flag):
@@ -58,6 +55,7 @@ class FieldFunction(enum.Flag):
     Strobe = enum.auto()
 
 
+
 class RegType(enum.Enum):
     """ register is write-only """
     Write = enum.auto()
@@ -73,6 +71,7 @@ class RegType(enum.Enum):
     ReadEvent = enum.auto()
 
 
+
 class WriteEventType(enum.Enum):
     
     """ When the register is written, a strobe bit is set for a single clock cycle """
@@ -80,6 +79,7 @@ class WriteEventType(enum.Enum):
     
     """ When the register is written, when cyc goes low, a strobe bit is set for a single clock cycle """
     StrobeAfterWriteOnCycleEnd = enum.auto()
+
 
 
 @dataclasses.dataclass
@@ -104,6 +104,7 @@ class Field:
     trigger_on: FieldChangeType = dataclasses.field(default=0)
 
 
+
 @dataclasses.dataclass
 class Register:
     
@@ -125,6 +126,7 @@ class Register:
     comment: str = dataclasses.field(default=None)
 
 
+
 @dataclasses.dataclass
 class RegisterSet:
 
@@ -134,21 +136,6 @@ class RegisterSet:
     """ Wishbone port size, in bits (note that granularity will alyways be 8 bit)"""
     port_size: int
     registers: list[Register]
-
-
-    def get_sv_gen(self, format: 'RegisterSvGenerator.Format' = None) -> 'list[RegisterSvGenerator]':
-        from ..codegen.gen_sv import RegisterSvGenerator
-        return RegisterSvGenerator(self, self.name, format)
-
-
-    def get_c_gen(self, address_shift=0, format: 'RegisterCGenerator.Format' = None) -> 'list[RegisterCGenerator]':
-        from ..codegen.gen_c import RegisterCGenerator
-        return RegisterCGenerator(self, self.name, address_shift, format)
-
-
-    def get_py_gen(self, address_shift=0, format: 'RegisterPyGenerator.Format' = None) -> 'list[RegisterPyGenerator]':
-        from ..codegen.gen_py import RegisterPyGenerator
-        return RegisterPyGenerator(self, self.name, address_shift, format)
 
 
     @staticmethod

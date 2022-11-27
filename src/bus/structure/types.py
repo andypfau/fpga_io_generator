@@ -1,6 +1,4 @@
-from ..codegen.gen_sv import BusSvGenerator
-from ..codegen.gen_graph import BusGraphGenerator
-from ...registers import RegisterSet, RegisterPyGenerator, RegisterCGenerator, RegisterSvGenerator
+from ...registers import RegisterSet
 
 import math, dataclasses, enum
 
@@ -54,30 +52,3 @@ class WbBus:
     masters: list[WbMaster]
     slaves: list[WbSlave]
     topology: WbBusTopology = WbBusTopology.SharedBus
-
-    def get_sv_gen(self) -> BusSvGenerator:
-        return BusSvGenerator(self, self.name)
-
-    def get_graph_gen(self) -> BusGraphGenerator:
-        return BusGraphGenerator(self, self.name+'.gv')
-
-    def get_reg_sv_gens(self, format: RegisterSvGenerator.Format = None) -> RegisterSvGenerator:
-        return [s._register_set.get_sv_gen(format) for s in self.slaves if s._register_set is not None]
-
-    def get_reg_py_gens(self, reference_master_port_size: int, format: RegisterPyGenerator.Format = None) -> RegisterPyGenerator:
-        bus_port_size = max([c.port_size for c in self.masters+self.slaves])
-        address_shift = int(round(math.log2(reference_master_port_size / bus_port_size))) # the required Wishbone adapter will swallow this number of bits
-        result = []
-        for slave in self.slaves:
-            if slave._register_set is not None:
-                result.append(slave._register_set.get_py_gen(address_shift, format))
-        return result
-
-    def get_reg_c_gens(self, reference_master_port_size: int, format: RegisterCGenerator.Format = None) -> RegisterCGenerator:
-        bus_port_size = max([c.port_size for c in self.masters+self.slaves])
-        address_shift = int(round(math.log2(reference_master_port_size / bus_port_size))) # the required Wishbone adapter will swallow this number of bits
-        result = []
-        for slave in self.slaves:
-            if slave._register_set is not None:
-                result.append(slave._register_set.get_c_gen(address_shift, format))
-        return result

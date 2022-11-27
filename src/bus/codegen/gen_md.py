@@ -1,8 +1,5 @@
 from ..tools import get_adr_bits
-
-from typing import TYPE_CHECKING
-if TYPE_CHECKING:
-    from ..structure.types import WbBus, WbMaster, WbSlave
+from ..structure.types import WbBus, WbMaster, WbSlave
 
 import math, warnings
 
