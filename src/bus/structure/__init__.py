@@ -1,1 +1,1 @@
-from .types import WbBus, WbSlave, WbMaster, WbBusTopology
+from .types import WbNode, WbBus, WbSlave, WbMaster, WbBusTopology

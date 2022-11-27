@@ -13,7 +13,7 @@ if __name__ == '__main__':
     for mw,sw in [(32,16), (16,32)]:
         
         m = WbMaster('MCU', mw, 8, 16)
-        s = WbSlave('RegisterSet', 0, sw, 8, 2)
+        s = WbSlave('RegisterSet', sw, 8, 2, 0)
         b = WbBus('MyBus', [m], [s])
 
         BusSvGenerator(b, 'my_bus').save(filename_code=f'{NAME}_{mw}-{sw}.sv')

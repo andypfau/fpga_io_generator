@@ -12,7 +12,7 @@ if __name__ == '__main__':
 
     # We define a master and a slave; they both are compatible in this case (32 bit wide, 8 bit granularity)
     m = WbMaster('MCU', 32, 8, 16)
-    s = WbSlave('RegisterSet', 0, 32, 8, 2)
+    s = WbSlave('RegisterSet', 32, 8, 2, 0)
 
     # Now we define a simple bus, which only has that master and that slave
     b = WbBus('MyBus', [m], [s])

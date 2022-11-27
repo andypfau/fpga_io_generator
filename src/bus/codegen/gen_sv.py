@@ -1,5 +1,5 @@
 from ..tools import get_adr_bits
-from ..structure.types import WbBus, WbMaster, WbSlave
+from ..structure.types import WbBus, WbMaster, WbSlave, WbNode
 
 import math, warnings
 
@@ -52,8 +52,8 @@ class BusSvGeneratorHelper:
 
         bus_port_size = 8
         bus_granularity = 64
-        bus_address_size = 0
-        def check_bus_params(components:'WbMaster|WbSlave', display_str:str, bus_port_size:int, bus_granularity:int, bus_address_size:int):
+        bus_address_size = 0 # this is the number of usable bits, i.e. hi-lo+1
+        def check_bus_params(components:"WbNode", display_str:str, bus_port_size:int, bus_granularity:int, bus_address_size:int):
             for component in components:
                 if component.port_size not in [8, 16, 32, 64]:
                     raise ValueError(f'{display_str} {component.name} has invalid bus port size (must be 8 16, 32 or 64)')
@@ -160,7 +160,7 @@ class BusSvGeneratorHelper:
 
         adapter_decls = []
         adapter_impls = []
-        def adapt(components:'WbMaster|WbSlave', is_master:bool):
+        def adapt(components:"WbNode", is_master:bool):
             adapted_names = {}
             for component in components:
                 if component.port_size==bus_port_size and component.granularity==bus_granularity:
