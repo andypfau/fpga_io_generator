@@ -1,7 +1,7 @@
 from context import src, demo_output_folder, prepare_output_folder
 
 from src.bus.structure import WbMaster, WbSlave, WbBus, WbBusTopology
-from src.bus.codegen import BusGraphGenerator, BusSvGenerator
+from src.bus.codegen import BusGraphGenerator, BusSvGenerator, BusMdGenerator
 
 
 
@@ -26,3 +26,7 @@ if __name__ == '__main__':
 
     # We can also generate a graph for that bus. The file format could also be e.g. PDF.
     BusGraphGenerator(b).save(f'{NAME}.png')
+
+
+    # And finnaly we generate some documentation in Markdown-format
+    BusMdGenerator(b).save(f'{NAME}.md')

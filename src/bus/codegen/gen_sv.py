@@ -7,12 +7,16 @@ if TYPE_CHECKING:
 import math, warnings
 
 
+
 class BusSvGenerator:
 
     def __init__(self, bus: 'WbBus', module_name: str = 'wishbone_bus'):
         self.bus = bus
         self.module_name = module_name
-        self.update()
+        
+        gen = BusSvGeneratorHelper(bus, module_name)
+        self.instance = gen.instance
+        self.implementation = gen.implementation
     
 
     def get_instance_template_code(self) -> str:
@@ -30,7 +34,17 @@ class BusSvGenerator:
         if filename_instance_template is not None:
             with open(filename_instance_template, 'w') as fp:
                 fp.write(self.get_instance_template_code())
-                
+           
+
+
+class BusSvGeneratorHelper:
+
+    def __init__(self, bus: 'WbBus', module_name: str = 'wishbone_bus'):
+        self.bus = bus
+        self.module_name = module_name
+
+        self.update()
+     
     
     def update(self):
         

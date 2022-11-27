@@ -1,7 +1,7 @@
 from context import src, demo_output_folder, prepare_output_folder
 
 from src.bus.structure import WbMaster, WbSlave, WbBus, WbBusTopology
-from src.bus.codegen import BusGraphGenerator, BusSvGenerator
+from src.bus.codegen import BusGraphGenerator, BusSvGenerator, BusMdGenerator
 
 
 
@@ -18,3 +18,4 @@ if __name__ == '__main__':
 
         BusSvGenerator(b, 'my_bus').save(filename_code=f'{NAME}_{mw}-{sw}.sv')
         BusGraphGenerator(b).save(f'{NAME}_{mw}-{sw}.png')
+        BusMdGenerator(b).save(f'{NAME}.md')
