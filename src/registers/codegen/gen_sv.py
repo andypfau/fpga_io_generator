@@ -1,4 +1,4 @@
-from ..tools import check_names, get_register_addresses
+from ..tools import check_names, get_register_addresses, clog2
 from ..structure.types import RegType, RegisterSet, Register, WriteEventType, FieldChangeType, Field, FieldType
 
 import math
@@ -13,11 +13,6 @@ class VarnameType(enum.Enum):
     Register = enum.auto()
     DelayRegister = enum.auto()
     LatchRegister = enum.auto()
-
-
-
-def clog2(x: float) -> int:
-    return int(math.ceil(math.log2(x)))
 
 
 

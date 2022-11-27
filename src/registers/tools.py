@@ -1,5 +1,4 @@
 import math, warnings
-from .structure.types import RegisterSet, Register
 
 
 def check_names(registers, test_fn: callable = None):
@@ -31,7 +30,7 @@ def check_names(registers, test_fn: callable = None):
         raise RuntimeError(f'Register names in {registers.name} are not unique')
 
 
-def get_register_addresses(registers: RegisterSet) -> "map[str, int]":
+def get_register_addresses(registers: "RegisterSet") -> "map[str, int]":
     
     reg_addresses = {}
     next_auto_address = 0
@@ -50,3 +49,7 @@ def get_register_addresses(registers: RegisterSet) -> "map[str, int]":
         next_auto_address = addr + (registers.port_size // 8)
 
     return reg_addresses
+
+
+def clog2(x: float) -> int:
+    return int(math.ceil(math.log2(x)))

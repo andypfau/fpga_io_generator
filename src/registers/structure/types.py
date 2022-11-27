@@ -1,3 +1,5 @@
+from ..tools import clog2
+
 from typing import TYPE_CHECKING
 if TYPE_CHECKING:
     from ..codegen.gen_sv import RegisterSvGenerator
@@ -125,6 +127,7 @@ class Register:
 
 @dataclasses.dataclass
 class RegisterSet:
+
     name: str
     """  Absolute base address """
     base_address: int
@@ -132,18 +135,41 @@ class RegisterSet:
     port_size: int
     registers: list[Register]
 
+
     def get_sv_gen(self, format: 'RegisterSvGenerator.Format' = None) -> 'list[RegisterSvGenerator]':
         from ..codegen.gen_sv import RegisterSvGenerator
         return RegisterSvGenerator(self, self.name, format)
+
 
     def get_c_gen(self, address_shift=0, format: 'RegisterCGenerator.Format' = None) -> 'list[RegisterCGenerator]':
         from ..codegen.gen_c import RegisterCGenerator
         return RegisterCGenerator(self, self.name, address_shift, format)
 
+
     def get_py_gen(self, address_shift=0, format: 'RegisterPyGenerator.Format' = None) -> 'list[RegisterPyGenerator]':
         from ..codegen.gen_py import RegisterPyGenerator
         return RegisterPyGenerator(self, self.name, address_shift, format)
 
+
     @staticmethod
     def granularity() -> int:
         return 8
+
+    
+    def address_bit_range(self) -> "tuple[int,int]":
+        """
+        Returns a tuple that represents the lowest and the highest address bit index
+        
+        Example:
+        - there are 3 registers -> 2 bits needed
+        - width is 32 bit (granularity is always 8) -> lowest address bit is by definition 2
+        Then the adr_in port has the range [3:2], and this method returns (2,3)
+        """
+        
+        n_regs = len(self.registers)
+        adr_bits = max(1, int(math.ceil(math.log2(n_regs))))
+
+        lowest_bit = clog2(self.port_size // 8)
+        highest_bit = lowest_bit + adr_bits - 1
+
+        return (lowest_bit, highest_bit)
