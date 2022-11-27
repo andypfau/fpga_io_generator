@@ -29,5 +29,5 @@ Check out the examples in the `samples` folder.
 Missing Features
 ----------------
 
-- bus code generator (arbiters, demultiplexers, adapters); code already exists, but must be refactored and documented
+- bus code generator (arbiters, demultiplexers, adapters): not fully working yet
 - more intensive testing of generated code
