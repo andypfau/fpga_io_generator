@@ -1,4 +1,4 @@
-from ..tools import clog2
+from ...tools import clog2
 
 from typing import TYPE_CHECKING
 if TYPE_CHECKING:

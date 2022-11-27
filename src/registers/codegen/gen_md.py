@@ -1,4 +1,4 @@
-from ..tools import check_names, get_register_addresses
+from ...tools import check_names, get_register_addresses, md_table
 from ..structure.types import RegType, RegisterSet, Register, WriteEventType, FieldChangeType, Field, FieldType, FieldFunction
 
 import math
@@ -37,35 +37,6 @@ class RegisterMdGeneratorHelper:
         self.reg_addresses = get_register_addresses(self.registers)
         self.generate()
     
-
-    def md_table(self, rows):
-        
-        cols = zip(*rows)
-        widths = [max([len(str(cell))+2 for cell in col]) for col in cols]
-
-        def print_row(row):
-            line = []
-            for width,cell in zip(widths, row):
-                s = ' ' + str(cell) + ' '
-                while len(s) < width:
-                    s += ' '
-                line.append(s)
-            return '|' + '|'.join(line) + '|'
-
-        def print_separator_row():
-            line = []
-            for width in widths:
-                line.append('-'*width)
-            return '|' + '|'.join(line) + '|'
-
-        md = []
-        for i, row in enumerate(rows):
-            md.append(print_row(row))
-            if i==0:
-                md.append(print_separator_row())
-
-        return md
-
 
     def generate(self):
         
@@ -113,7 +84,7 @@ class RegisterMdGeneratorHelper:
             
             table.append([f'0x{addr:08X}', f'0x{abs_addr:08X}', reg.name, reg.description, typ, hw, com])
 
-        md.extend(self.md_table(table))
+        md.extend(md_table(table))
 
         if len(comments) > 0:
             md.append('')
@@ -205,7 +176,7 @@ class RegisterMdGeneratorHelper:
                     com = len(comments)
 
                 table.append([bits, field.name, field.description, default, access, special, com])
-            md.extend(self.md_table(table))
+            md.extend(md_table(table))
 
             if len(comments) > 0:
                 md.append('')

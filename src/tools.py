@@ -53,3 +53,32 @@ def get_register_addresses(registers: "RegisterSet") -> "map[str, int]":
 
 def clog2(x: float) -> int:
     return int(math.ceil(math.log2(x)))
+
+
+def md_table(rows: "list[list[any]]") -> str:
+    
+    cols = zip(*rows)
+    widths = [max([len(str(cell))+2 for cell in col]) for col in cols]
+
+    def print_row(row):
+        line = []
+        for width,cell in zip(widths, row):
+            s = ' ' + str(cell) + ' '
+            while len(s) < width:
+                s += ' '
+            line.append(s)
+        return '|' + '|'.join(line) + '|'
+
+    def print_separator_row():
+        line = []
+        for width in widths:
+            line.append('-'*width)
+        return '|' + '|'.join(line) + '|'
+
+    md = []
+    for i, row in enumerate(rows):
+        md.append(print_row(row))
+        if i==0:
+            md.append(print_separator_row())
+
+    return md

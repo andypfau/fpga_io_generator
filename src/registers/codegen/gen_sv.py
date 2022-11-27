@@ -1,4 +1,4 @@
-from ..tools import check_names, get_register_addresses, clog2
+from ...tools import check_names, get_register_addresses, clog2
 from ..structure.types import RegType, RegisterSet, Register, WriteEventType, FieldChangeType, Field, FieldType
 
 import math

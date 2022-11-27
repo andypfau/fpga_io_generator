@@ -1,5 +1,5 @@
 from ..structure.types import RegisterSet, RegType, FieldType, FieldFunction
-from ..tools import check_names, get_register_addresses
+from ...tools import check_names, get_register_addresses
 from .gen_py import RegisterPyGeneratorHelper
 
 import math, warnings

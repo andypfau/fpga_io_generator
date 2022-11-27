@@ -1,5 +1,5 @@
 from ..structure.types import RegisterSet, RegType, FieldType, FieldFunction
-from ..tools import check_names
+from ...tools import check_names
 
 from dataclasses import dataclass, field
 import re
