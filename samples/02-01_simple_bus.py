@@ -30,3 +30,5 @@ if __name__ == '__main__':
 
     # And finnaly we generate some documentation in Markdown-format
     BusMdGenerator(b).save(f'{NAME}.md')
+
+    # Note that you will need some SystemVerilog files from the <include>-folder to synthesize the generated code.
