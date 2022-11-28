@@ -125,13 +125,13 @@ class WbBus:
 
     def check(self):
         
+        if len(self.masters)<1 or len(self.slaves)<1:
+            raise ValueError(f'Need at least one master and one slave')
+        
         if len(self.slaves) != len(set([s.name for s in self.slaves])):
             raise RuntimeError(f'Slave names must be unique')
         if len(self.masters) != len(set([m.name for m in self.masters])):
             raise RuntimeError(f'Master names must be unique')
-        
-        if len(self.masters)<1 or len(self.slaves)<1:
-            raise ValueError(f'Need at least one master and one slave')
         
         for node in self.masters + self.slaves:
             if node.port_size not in [8, 16, 32, 64]:

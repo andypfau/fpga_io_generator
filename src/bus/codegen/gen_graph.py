@@ -58,13 +58,7 @@ class BusGraphGeneratorHelper:
 
         # TODO: draw box (subgraph) around the bus
 
-        if len(self.bus.masters)<1 or len(self.bus.slaves)<1:
-            raise ValueError('Bus is empty')
-
         g = Digraph('G', filename=self.filename)
-        
-        bus_port_size = max([c.port_size for c in self.bus.masters+self.bus.slaves])
-        bus_granularity = min([c.granularity for c in self.bus.masters+self.bus.slaves])
 
         def m_id(m:'WbMaster'):
             return m.name
@@ -90,6 +84,7 @@ class BusGraphGeneratorHelper:
             g.node(m_id(slave))
         
         g.attr('node', shape='circle')
+        bus_fmt = self.bus.bus_format
         if (self.bus.topology == WbBusTopology.SharedBus):
             if len(self.bus.masters)==1 and len(self.bus.slaves)==1:
                 mb_name = sb_name = 'Bus'
@@ -97,45 +92,46 @@ class BusGraphGeneratorHelper:
                 g.node(mb_name)
             elif len(self.bus.masters)==1 and len(self.bus.slaves)>1:
                 mb_name = sb_name = 'Demux'
-                g.attr('node', label=f'Demux\n{bus_port_size}/{bus_granularity}')
+                g.attr('node', label=f'Demux\n{bus_fmt.port_size}/{bus_fmt.granularity}')
                 g.node(mb_name)
             elif len(self.bus.masters)>1 and len(self.bus.slaves)==1:
                 mb_name = sb_name = 'Arbiter'
-                g.attr('node', label=f'Arbiter\n{bus_port_size}/{bus_granularity}')
+                g.attr('node', label=f'Arbiter\n{bus_fmt.port_size}/{bus_fmt.granularity}')
                 g.node(mb_name)
             else:
                 mb_name = 'Arbiter'
                 sb_name = 'Demux'
-                g.attr('node', label=f'Arbiter\n{bus_port_size}/{bus_granularity}')
+                g.attr('node', label=f'Arbiter\n{bus_fmt.port_size}/{bus_fmt.granularity}')
                 g.node(mb_name)
-                g.attr('node', label=f'Demux\n{bus_port_size}/{bus_granularity}')
+                g.attr('node', label=f'Demux\n{bus_fmt.port_size}/{bus_fmt.granularity}')
                 g.node(sb_name)
                 g.edge(mb_name, sb_name)
         elif (self.bus.topology == WbBusTopology.Crossbar):
                 mb_name = 'Crossbar'
                 sb_name = 'Crossbar'
-                g.attr('node', label=f'Crossbar Matrix\n{bus_port_size}/{bus_granularity}')
+                g.attr('node', label=f'Crossbar Matrix\n{bus_fmt.port_size}/{bus_fmt.granularity}')
                 g.node(mb_name)
         else:
             raise ValueError()
 
         for master in self.bus.masters:
-            if master.port_size==bus_port_size and master.granularity==bus_granularity:
+            adapter = self.bus.get_adapter(master)
+            if adapter is None:
                 g.edge(m_id(master), mb_name, taillabel=m_label(master))
             else:
-                g.attr('node', shape='trapezium' if master.port_size<bus_port_size else 'invtrapezium', style='')
-                g.attr('node', label=f'{master.port_size}/{master.granularity}\nto\n{bus_port_size}/{bus_granularity}')
+                g.attr('node', shape='trapezium' if master.port_size<adapter[0].port_size else 'invtrapezium', style='')
+                g.attr('node', label=f'{master.port_size}/{master.granularity}\nto\n{adapter[0].port_size}/{adapter[0].granularity}')
                 g.attr('node', fontsize='12')
                 id_adapter = m_id(master) + '_adapter'
                 g.edge(m_id(master), id_adapter)
                 g.edge(id_adapter, mb_name, taillabel=m_label(master))
         
         for slave in self.bus.slaves:
-            if slave.port_size==bus_port_size and slave.granularity==bus_granularity:
+            if self.bus.get_adapter(slave) is None:
                 g.edge(sb_name, m_id(slave), headlabel=s_label(slave))
             else:
-                g.attr('node', shape='invtrapezium' if slave.port_size<bus_port_size else 'trapezium', style='')
-                g.attr('node', label=f'{bus_port_size}/{bus_granularity}\nto\n{slave.port_size}/{slave.granularity}')
+                g.attr('node', shape='invtrapezium' if slave.port_size<adapter[0].port_size else 'trapezium', style='')
+                g.attr('node', label=f'{adapter[0].port_size}/{adapter[0].granularity}\nto\n{slave.port_size}/{slave.granularity}')
                 g.attr('node', fontsize='12')
                 id_adapter = m_id(slave) + '_adapter'
                 g.edge(sb_name, id_adapter)
