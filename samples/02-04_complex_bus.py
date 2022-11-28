@@ -13,6 +13,7 @@ if __name__ == '__main__':
     m1 = WbMaster('MCU',           32, 8, 16)
     m2 = WbMaster('Debug',          8, 8, 24)
     
+    # Note that we can use an ellipsis for any address, and the addresses will be assigned automatically
     s1 = WbSlave('User Interface',  8, 8,  5, 0x100)
     s2 = WbSlave('I/O Expander',   32, 8,  3, ...)
     s3 = WbSlave('PWM Generator',  16, 8,  3, ...)
