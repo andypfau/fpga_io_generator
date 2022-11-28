@@ -48,16 +48,8 @@ class BusGraphGeneratorHelper:
         self.bus = bus
         self.filename = filename
 
-        self.check()
+        self.bus.check()
         self.update()
-    
-
-    def check(self):
-        
-        if len(self.bus.slaves) != len(set([s.name for s in self.bus.slaves])):
-            raise RuntimeError(f'Slave names must be unique')
-        if len(self.bus.masters) != len(set([m.name for m in self.bus.masters])):
-            raise RuntimeError(f'Master names must be unique')
 
     
     def update(self):
@@ -85,7 +77,7 @@ class BusGraphGeneratorHelper:
         def s_name(s:'WbSlave'):
             return f'Slave\n"{s.name}"\n{s.port_size}/{s.granularity}'
         def s_label(s:'WbSlave'):
-            return f'0x{s.base_address:X}'
+            return f'0x{s.get_base_address():X}'
 
         g.attr('node', shape='rect')
         for master in self.bus.masters:

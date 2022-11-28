@@ -40,6 +40,7 @@ class BusSvGeneratorHelper:
         self.bus = bus
         self.module_name = module_name
 
+        self.bus.check()
         self.update()
      
     
@@ -47,20 +48,11 @@ class BusSvGeneratorHelper:
         
         from ..structure.types import WbBusTopology
 
-        if len(self.bus.masters)<1 or len(self.bus.slaves)<1:
-            raise ValueError(f'Need at least one master and one slave')
-
         bus_port_size = 8
         bus_granularity = 64
         bus_address_size = 0 # this is the number of actual bits, i.e. hi-lo+1
         def check_bus_params(components: "WbNode", display_str:str, bus_port_size:int, bus_granularity:int, bus_address_size:int):
             for component in components:
-                if component.port_size not in [8, 16, 32, 64]:
-                    raise ValueError(f'{display_str} {component.name} has invalid bus port size (must be 8 16, 32 or 64)')
-                if component.granularity not in [8, 16, 32, 64]:
-                    raise ValueError(f'{display_str} {component.name} has invalid bus granularity (must be 8 16, 32 or 64)')
-                if component.granularity > component.port_size:
-                    raise ValueError(f'{display_str} {component.name} has invalid bus granularity (must be >= port_size)')
                 bus_port_size = max(bus_port_size, component.port_size)
                 bus_granularity = min(bus_granularity, component.granularity)
                 bus_address_size = max(bus_address_size, component.address_size)
@@ -77,14 +69,14 @@ class BusSvGeneratorHelper:
         bus_sel_hi, bus_sel_lo = bus_port_size//bus_granularity-1, 0
         bus_sel_bits = bus_sel_hi + 1
         
-        highest_slave_base_address = max([s.base_address for s in self.bus.slaves])
+        highest_slave_base_address = max([s.get_base_address() for s in self.bus.slaves])
 
         slave_addresses_in_use = []
         for slave in self.bus.slaves:
             highest_relative_address = (1<<slave.address_size) - 1
-            if (slave.base_address % bus_sel_bits) != 0:
-                raise Exception(f'Slave {slave.name} base-address 0x{slave.base_address:X} must be a multiple of {bus_sel_bits}')
-            for addr in range(slave.base_address, slave.base_address+highest_relative_address):
+            if (slave.get_base_address() % bus_sel_bits) != 0:
+                raise Exception(f'Slave {slave.name} base-address 0x{slave.get_base_address():X} must be a multiple of {bus_sel_bits}')
+            for addr in range(slave.get_base_address(), slave.get_base_address()+highest_relative_address):
                 if addr in slave_addresses_in_use:
                     raise Exception(f'Multiple slaves occupy address 0x{addr:X}')
                 slave_addresses_in_use.append(addr)
@@ -117,7 +109,7 @@ class BusSvGeneratorHelper:
             impl.append(f'//     {master.name}')
         impl.append(f'// slaves:')
         for slave in self.bus.slaves:
-            impl.append(f'//     0x{slave.base_address:08X}: {slave.name}')
+            impl.append(f'//     0x{slave.get_base_address():08X}: {slave.name}')
         impl.append(f'')
         impl.append(f'')
         impl.append(f'module {self.module_name} (')
@@ -322,10 +314,10 @@ class BusSvGeneratorHelper:
                 impl.append(f'always_comb begin')
                 slave_addr_mask = 0
                 for slave in self.bus.slaves:
-                    slave_addr_mask |= slave.base_address
+                    slave_addr_mask |= slave.get_base_address()
                 for i,slave in enumerate(self.bus.slaves):
                     ee = 'end else ' if i>0 else ''
-                    impl.append(f'\t{ee}if ((bus_adr_l & \'h{slave_addr_mask>>bus_adr_lo:X}) == \'h{slave.base_address>>bus_adr_lo:X}) begin')
+                    impl.append(f'\t{ee}if ((bus_adr_l & \'h{slave_addr_mask>>bus_adr_lo:X}) == \'h{slave.get_base_address()>>bus_adr_lo:X}) begin')
                     impl.append(f'\t\taddrcomp_en_l <= {len(self.bus.slaves)}\'b{1<<i:0{len(self.bus.slaves)}b}; // select {slave.name}')
                 impl.append(f'\tend else begin')
                 impl.append(f'\t\taddrcomp_en_l <= {len(self.bus.slaves)}\'b{0:0{len(self.bus.slaves)}b}; // de-select all')
@@ -386,7 +378,7 @@ class BusSvGeneratorHelper:
             impl.append(f'localparam local_address_slice_low = {bus_adr_lo};')
             impl.append(f'')
             for slave in self.bus.slaves:
-                impl.append(f'localparam address_{slave.name} = {slave_adr_hi-slave_adr_lo+1}\'h{(slave.base_address&slave_adr_mask)>>slave_adr_lo};')
+                impl.append(f'localparam address_{slave.name} = {slave_adr_hi-slave_adr_lo+1}\'h{(slave.get_base_address() & slave_adr_mask)>>slave_adr_lo};')
             impl.append(f'')
             impl.append(f'')
             impl.append(f'// arbiter')

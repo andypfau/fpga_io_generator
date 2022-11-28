@@ -52,8 +52,7 @@ class RegisterMdGeneratorHelper:
 
         md.append('')
         md.append('')
-        md.append('Registers')
-        md.append('---------')
+        md.append('## Registers')
         md.append('')
 
         table = [['Rel. Offset', 'Abs. Address', 'Name', 'Description', 'Access', 'Hardware', 'Comments']]
@@ -94,8 +93,7 @@ class RegisterMdGeneratorHelper:
 
         md.append('')
         md.append('')
-        md.append('Register Fields')
-        md.append('---------------')
+        md.append('## Register Fields')
         for reg in self.registers.registers:
             
             md.append('')

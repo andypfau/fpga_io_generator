@@ -13,9 +13,9 @@ if __name__ == '__main__':
     m1 = WbMaster('MCU',           32, 8, 16)
     m2 = WbMaster('Debug',          8, 8, 24)
     
-    s1 = WbSlave('User Interface',  8, 8,  5, 0x0000)
-    s2 = WbSlave('Io Expander',    32, 8,  3, 0x1000)
-    s3 = WbSlave('PWM Generator',  16, 8,  3, 0x2000)
+    s1 = WbSlave('User Interface',  8, 8,  5, 0x100)
+    s2 = WbSlave('I/O Expander',   32, 8,  3, ...)
+    s3 = WbSlave('PWM Generator',  16, 8,  3, ...)
     
     b = WbBus('MyBus', [m1, m2], [s1, s2, s3])
 
