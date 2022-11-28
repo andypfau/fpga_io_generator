@@ -47,9 +47,9 @@ class WbBusSolver:
         forbidden_mask = (1 << bus_adr_lo) - 1
         
         for slave in self.bus.slaves:
-            if slave._base_address is not Ellipsis:
+            if slave._requested_base_address is not Ellipsis:
                 
-                adr_lo = slave._base_address
+                adr_lo = slave._requested_base_address
                 adr_hi = adr_lo + (1<<(slave.address_size+bus_adr_lo-1)) - 1
                 
                 if (adr_lo & forbidden_mask) != 0:
@@ -60,12 +60,12 @@ class WbBusSolver:
                         raise RuntimeError(f'Slave {slave.name}\'s address range overlaps with {other_name}\'s address range')
                 
                 slave_address_ranges[slave.name] = (adr_lo, adr_hi)
-                slave._auto_base_address = adr_lo
+                slave._base_address = adr_lo
                 
                 next_free_address = max(next_free_address, adr_hi + 1)
         
         for slave in self.bus.slaves:
-            if slave._base_address is Ellipsis:
+            if slave._requested_base_address is Ellipsis:
                 
                 assert (next_free_address & forbidden_mask) == 0
                 
@@ -73,7 +73,7 @@ class WbBusSolver:
                 adr_hi = adr_lo + (1<<(slave.address_size+bus_adr_lo-1)) - 1
                 
                 slave_address_ranges[slave.name] = (adr_lo, adr_hi)
-                slave._auto_base_address = adr_lo
+                slave._base_address = adr_lo
                 
                 next_free_address = adr_hi + 1
             

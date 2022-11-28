@@ -56,6 +56,9 @@ class WbMaster(WbNode):
     
 
     def get_address_shift(self) -> int:
+        if self._address_shift is None:
+            raise RuntimeError('This master was not properly initialized yet. Connect it to a bus first.')
+
         return self._address_shift
 
 
@@ -71,8 +74,8 @@ class WbSlave(WbNode):
         address_size:  The number of actual address bits (i.e. hi(sel)-lo(sel))
         base_address:  Absolute base address; set to ... for automatic addressing
         """
-        self._base_address = base_address
-        self._auto_base_address = None
+        self._requested_base_address = base_address
+        self._base_address = None
         self._register_set = None # dtype: RegisterSet
         super().__init__(name, port_size, granularity, address_size)
 
@@ -88,10 +91,10 @@ class WbSlave(WbNode):
     
 
     def get_base_address(self) -> int:
-        if self._base_address is Ellipsis:
-            return self._auto_base_address
-        else:
-            return self._base_address
+        if self._base_address is None:
+            raise RuntimeError('This slave was not properly initialized yet. Connect it to a bus first.')
+
+        return self._base_address
 
 
 

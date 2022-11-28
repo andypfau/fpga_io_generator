@@ -48,38 +48,12 @@ class BusSvGeneratorHelper:
         
         from ..structure.types import WbBusTopology
 
-        bus_port_size = 8
-        bus_granularity = 64
-        bus_address_size = 0 # this is the number of actual bits, i.e. hi-lo+1
-        def check_bus_params(components: "WbNode", display_str:str, bus_port_size:int, bus_granularity:int, bus_address_size:int):
-            for component in components:
-                bus_port_size = max(bus_port_size, component.port_size)
-                bus_granularity = min(bus_granularity, component.granularity)
-                bus_address_size = max(bus_address_size, component.address_size)
-            return bus_port_size, bus_granularity, bus_address_size
-        bus_port_size, bus_granularity, bus_address_size = check_bus_params(self.bus.masters, 'Master', bus_port_size, bus_granularity, bus_address_size)
-        bus_port_size, bus_granularity, bus_address_size = check_bus_params(self.bus.slaves,  'Slave',  bus_port_size, bus_granularity, bus_address_size)
-
-        highest_slave_address_size = max([s.address_size for s in self.bus.slaves])
-        lowest_master_address_size = min([m.address_size for m in self.bus.masters])
-        if highest_slave_address_size > lowest_master_address_size:
-            warnings.warn(f'The smallest master address size ({lowest_master_address_size}) is less than the highest slave address size ({highest_slave_address_size}); not all slave addresses can be accessed', UserWarning)
+        bus_port_size = self.bus.bus_format.port_size
+        bus_granularity = self.bus.bus_format.granularity
+        bus_address_size = self.bus.bus_format.address_size
             
         bus_adr_hi, bus_adr_lo = bus_address_size-1, int(round(math.log2(bus_port_size//bus_granularity)))
-        bus_sel_hi, bus_sel_lo = bus_port_size//bus_granularity-1, 0
-        bus_sel_bits = bus_sel_hi + 1
-        
-        highest_slave_base_address = max([s.get_base_address() for s in self.bus.slaves])
-
-        slave_addresses_in_use = []
-        for slave in self.bus.slaves:
-            highest_relative_address = (1<<slave.address_size) - 1
-            if (slave.get_base_address() % bus_sel_bits) != 0:
-                raise Exception(f'Slave {slave.name} base-address 0x{slave.get_base_address():X} must be a multiple of {bus_sel_bits}')
-            for addr in range(slave.get_base_address(), slave.get_base_address()+highest_relative_address):
-                if addr in slave_addresses_in_use:
-                    raise Exception(f'Multiple slaves occupy address 0x{addr:X}')
-                slave_addresses_in_use.append(addr)
+        bus_sel_hi = bus_port_size//bus_granularity-1
         
         inst = []
 
@@ -358,7 +332,7 @@ class BusSvGeneratorHelper:
 
             slave_adr_mask = 0
             for slave in self.bus.slaves:
-                slave_adr_mask |= slave.base_address
+                slave_adr_mask |= slave.get_base_address()
             slave_adr_hi = 64
             while slave_adr_mask & (1<<slave_adr_hi) == 0:
                 slave_adr_hi -= 1

@@ -28,7 +28,6 @@ def get_signals_str(node: "WbNode") -> str:
 
     adr_lo, adr_hi = node.get_adr_bits()
     sel_hi = node.get_sel_bit_count() - 1
-    n_adr = 1 << (adr_hi-adr_lo+1)
     return f'`dat[{node.port_size-1}:0]`, `adr[{adr_hi}:{adr_lo}]`, `sel[{sel_hi}:0]`'
 
 
