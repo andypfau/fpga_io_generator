@@ -127,6 +127,7 @@ class BusGraphGeneratorHelper:
                 g.edge(id_adapter, mb_name, taillabel=m_label(master))
         
         for slave in self.bus.slaves:
+            adapter = self.bus.get_adapter(slave)
             if self.bus.get_adapter(slave) is None:
                 g.edge(sb_name, m_id(slave), headlabel=s_label(slave))
             else:

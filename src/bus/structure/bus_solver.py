@@ -1,5 +1,5 @@
 from ...tools import clog2
-from .types import WbNode, WbBus, WbBusTopology
+from .types import WbNode, WbBus
 import warnings
 import math
 

@@ -1,7 +1,5 @@
 from ...tools import md_table, binary_si
-from ..structure.types import WbBus, WbMaster, WbSlave, WbBusTopology
-
-import math, warnings
+from ..structure.types import WbBus, WbNode, WbBusTopology
 
 
 
@@ -43,65 +41,71 @@ class BusMdGeneratorHelper:
     def generate(self):
         
         md = []
+        
+        any_plurality = len(self.bus.slaves)>1 or len(self.bus.masters)>1
 
         md.append(self.bus.name)
         md.append('==========')
-        md.append('')
-        
-        if self.bus.topology == WbBusTopology.SharedBus:
-            topo = 'shared bus'
-        elif self.bus.topology == WbBusTopology.Crossbar:
-            topo = 'crossbar'
-        else: raise ValueError()
-        
-        md.append(f'Topology: {topo}')
-
         md.append('')
         md.append('')
         md.append('## Masters')
         md.append('')
 
         table = [['Name', 'Port Size', 'Granularity', 'Addresses', 'Address Shift', 'Signals', 'Adapter']]
+        any_adapters = False
         for master in self.bus.masters:
 
             adr_lo, adr_hi = master.get_adr_bits()
             n_adr = 1 << (adr_hi-adr_lo+1)
             sigs = get_signals_str(master)
-            adapt = 'yes' if self.bus.get_adapter(master) is not None else 'no'
+            need_adapter = self.bus.get_adapter(master) is not None
+            adapt_str = 'yes' if need_adapter else 'no'
+            any_adapters |= need_adapter
             
-            table.append([master.name, master.port_size, master.granularity, binary_si(n_adr), master.get_address_shift(), sigs, adapt])
+            table.append([master.name, master.port_size, master.granularity, binary_si(n_adr), master.get_address_shift(), sigs, adapt_str])
 
+        if not any_adapters:
+            table = [row[:-1] for row in table]
         md.extend(md_table(table))
 
-        md.append('')
-        md.append('')
-        md.append('## Bus')
-        md.append('')
-        md.append(f'- port size: {self.bus.bus_format.port_size}')
-        md.append(f'- granularity: {self.bus.bus_format.port_size}')
-        md.append(f'- signals: {get_signals_str(self.bus.bus_format)}')
-
-        if any([m.get_address_shift()!=0 for m in self.bus.masters]):
+        if any_plurality:
 
             md.append('')
             md.append('')
-            md.append('### Address Table')
+            md.append('## Bus')
             md.append('')
-            md.append('Due to address shifting, each master might have its own addressing scheme, as shown below.')
-            md.append('')
-
-            highest_base_address = max([s.get_base_address() for s in self.bus.slaves])
-            highest_address_shift = max([m.get_address_shift() for m in self.bus.masters])
-            adr_strlen = len(f'{highest_base_address<<highest_address_shift:X}')
             
-            table = [[''] + [m.name for m in self.bus.masters]]
-
-            for slave in self.bus.slaves:
-                row = [f'0x{slave.get_base_address()<<m.get_address_shift():0{adr_strlen}X}' for m in self.bus.masters]
-                table.append([slave.name] + row)
+            if self.bus.topology == WbBusTopology.SharedBus:
+                topo = 'shared bus'
+            elif self.bus.topology == WbBusTopology.Crossbar:
+                topo = 'crossbar'
+            else: raise ValueError()
             
-            md.extend(md_table(table))
-            md.append('')
+            md.append(f'- Topology: {topo}')
+            md.append(f'- Port size: {self.bus.bus_format.port_size}')
+            md.append(f'- Granularity: {self.bus.bus_format.port_size}')
+            md.append(f'- Signals: {get_signals_str(self.bus.bus_format)}')
+
+            if any([m.get_address_shift()!=0 for m in self.bus.masters]):
+
+                md.append('')
+                md.append('')
+                md.append('### Address Table')
+                md.append('')
+                md.append('Due to address shifting, each master might have its own addressing scheme, as shown below.')
+                md.append('')
+
+                highest_base_address = max([s.get_base_address() for s in self.bus.slaves])
+                highest_address_shift = max([m.get_address_shift() for m in self.bus.masters])
+                adr_strlen = len(f'{highest_base_address<<highest_address_shift:X}')
+                
+                table = [[''] + [m.name for m in self.bus.masters]]
+
+                for slave in self.bus.slaves:
+                    row = [f'0x{slave.get_base_address()<<m.get_address_shift():0{adr_strlen}X}' for m in self.bus.masters]
+                    table.append([slave.name] + row)
+                
+                md.extend(md_table(table))
 
         md.append('')
         md.append('')
@@ -112,15 +116,20 @@ class BusMdGeneratorHelper:
         adr_strlen = len(f'{highest_base_address:X}')
 
         table = [['Base Address', 'Name', 'Port Size', 'Granularity', 'Addresses', 'Signals', 'Adapter']]
+        any_adapters = False
         for slave in self.bus.slaves:
 
             adr_lo, adr_hi = slave.get_adr_bits()
             n_adr = 1 << (adr_hi-adr_lo+1)
             sigs = get_signals_str(slave)
-            adapt = 'yes' if self.bus.get_adapter(slave) is not None else 'no'
+            need_adapter = self.bus.get_adapter(slave) is not None
+            adapt_str = 'yes' if need_adapter else 'no'
+            any_adapters |= need_adapter
             
-            table.append([f'0x{slave.get_base_address():0{adr_strlen}X}', slave.name, slave.port_size, slave.granularity, binary_si(n_adr), sigs, adapt])
+            table.append([f'0x{slave.get_base_address():0{adr_strlen}X}', slave.name, slave.port_size, slave.granularity, binary_si(n_adr), sigs, adapt_str])
 
+        if not any_adapters:
+            table = [row[:-1] for row in table]
         md.extend(md_table(table))
         md.append('')
         md.append('Note that the base address is given from the bus\'s point of view; masters might have to shift the address.')
