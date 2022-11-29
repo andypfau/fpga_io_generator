@@ -37,9 +37,3 @@ Tested with python 3.11.
 Check out the examples in the `samples` folder.
 
 You will need some HDL files from the `include` folder for synthesis.
-
-
-## Missing Features
-
-- bus code generator (arbiters, demultiplexers, adapters): not fully working yet
-- more intensive testing of generated code
