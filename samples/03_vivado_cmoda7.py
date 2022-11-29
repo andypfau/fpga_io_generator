@@ -1,17 +1,17 @@
-from context import src, demo_output_folder, prepare_output_folder
+from context import src, workdir
 
 from src.bus.structure import WbMaster, WbSlave, WbBus, WbBusTopology
 from src.bus.codegen import BusGraphGenerator, BusSvGenerator, BusMdGenerator
 from src.registers.structure import RegisterSet, Register, Field, FieldType, FieldFunction, RegType, WriteEventType, FieldChangeType
 from src.registers.codegen import RegisterSvGenerator, RegisterPyGenerator, RegisterCGenerator, RegisterMdGenerator
 
+import shutil
 
 
 
 if __name__ == '__main__':
 
-    NAME = demo_output_folder() + '/03-01_registers+bus'
-    prepare_output_folder()
+    DIR = f'{workdir()}/vivado_cmoda7/'
 
 
     # In this example we will combine bus generation and register generation.
@@ -37,7 +37,7 @@ if __name__ == '__main__':
     
     # register to control the monochrome LEDs
     r_led = RegisterSet('LEDs', 0x10, 16, [
-        Register('Ctrl', 'LED Driver', ..., RegType.Write, [
+        Register('Control', 'LED Driver', ..., RegType.Write, [
             Field('LED 1', 'Enable LED 1', [0], FieldType.Boolean, FieldFunction.WriteMasked),
             Field('LED 2', 'Enable LED 2', [8], FieldType.Boolean, FieldFunction.WriteMasked),
         ])
@@ -45,12 +45,12 @@ if __name__ == '__main__':
     
     # register to configure the automatic sweep controller
     r_swp = RegisterSet('Sweep Gen', 0x20, 32, [
-        Register('Ctrl1', 'Sweep config 1 (enable and delay)', ..., RegType.Write, write_event=WriteEventType.StrobeAfterWriteOnCycleEnd, fields=[
+        Register('Control 1', 'Sweep config 1 (enable and delay)', ..., RegType.Write, write_event=WriteEventType.StrobeAfterWriteOnCycleEnd, fields=[
             Field('En', 'Enable PWM sweep', [0], FieldType.Boolean, FieldFunction.WriteShadow, default=0,
                 comment='If sweeping is disabled, you can still control the PWM by configuring it directly'),
             Field('Delay', 'Sweep delay', [10,1], FieldType.Unsigned16Bit, FieldFunction.WriteShadow, default=100)
         ]),
-        Register('Ctrl2', 'Sweep config 2 (sweep range)', ..., RegType.Write, [
+        Register('Control 2', 'Sweep config 2 (sweep range)', ..., RegType.Write, [
             Field('Incr', 'Sweep increment', [9,0], FieldType.Unsigned16Bit, FieldFunction.WriteShadow, default=5,
                 comment='If sweeping is disabled, you can still control the PWM by configuring it directly'),
             Field('Max', 'Sweep max value', [25,16], FieldType.Signed16Bit, FieldFunction.WriteShadow, default=500),
@@ -73,17 +73,17 @@ if __name__ == '__main__':
     
     # debug-register just for fun
     r_dbg = RegisterSet('Debug', 0x40, 16, [
-        Register('Debug1', 'Debug Register  #1', ..., RegType.Strobe, write_event=WriteEventType.StrobeAfterWriteOnCycleEnd, fields=[
+        Register('Debug 1', 'Debug Register #1', ..., RegType.Strobe, write_event=WriteEventType.StrobeAfterWriteOnCycleEnd, fields=[
             Field('Test', 'Test', [0], FieldType.Boolean, FieldFunction.Strobe),
         ]),
-        Register('Debug2', 'Debug Register #2', ..., RegType.Handshake, [
+        Register('Debug 2', 'Debug Register #2', ..., RegType.Handshake, [
             Field('Test', 'Test', [0], FieldType.Boolean, FieldFunction.Strobe),
         ]),
-        Register('Debug3', 'Debug Register  #3', ..., RegType.WriteRead, [
+        Register('Debug 3 ', 'Debug Register #3', ..., RegType.WriteRead, [
             Field('Test', 'Test', [15,0], FieldType.Signed16Bit,
                 FieldFunction.Overwrite|FieldFunction.WriteShadow|FieldFunction.WriteMasked|FieldFunction.ReadShadow|FieldFunction.Read|FieldFunction.ReadModifyWrite),
         ]),
-        Register('Debug4', 'Debug Register  #4', ..., RegType.ReadEvent, [
+        Register('Debug 4', 'Debug Register #4', ..., RegType.ReadEvent, [
             Field('Toggle', 'Indicates that something toggled', [0], FieldType.Boolean, FieldFunction.Read,
                 trigger_on=FieldChangeType.Rising|FieldChangeType.Falling),
             Field('High', 'Indicates that something else was high', [8], FieldType.Boolean, FieldFunction.ReadShadow,
@@ -106,15 +106,17 @@ if __name__ == '__main__':
 
     
     for regset in [r_pwm, r_led, r_swp, r_btn, r_dbg]:
-        code_name = regset.name.lower()
+        code_name = regset.name.lower().replace(' ', '_')
         RegisterSvGenerator(regset).save(
-            filename_instance_template=f'{NAME}_{code_name}_instance_template.sv',
-            filename_code=f'{NAME}_{code_name}.sv')
-        RegisterCGenerator(regset, NAME).save(
-            filename_header=f'{NAME}_{code_name}.h',
-            filename_code=f'{NAME}_{code_name}.c')
-        RegisterPyGenerator(regset).save(f'{NAME}_{code_name}.py')
-        RegisterMdGenerator(regset).save(f'{NAME}_{code_name}.md')
-    BusSvGenerator(b).save(filename_code=f'{NAME}.sv')
-    BusGraphGenerator(b).save(f'{NAME}.png')
-    BusMdGenerator(b).save(f'{NAME}.md')
+            filename_instance_template=f'{DIR}{code_name}_instance_template.sv',
+            filename_code=f'{DIR}{code_name}.sv')
+        RegisterPyGenerator(regset).save(f'{DIR}/software/{code_name}.py')
+        RegisterMdGenerator(regset).save(f'{DIR}/docs/{code_name}.md')
+    BusSvGenerator(b).save(filename_code=f'{DIR}/hardware/remote_if_demo.srcs/hdl/wb_bus.sv')
+    BusGraphGenerator(b).save(f'{DIR}/docs/bus.png')
+    BusMdGenerator(b).save(f'{DIR}/docs/bus.md')
+
+    # copy some include-files
+    shutil.copy(f'{workdir()}/../include/wb_interface.sv', f'hardware/remote_if_demo.srcs/hdl')
+    shutil.copy(f'{workdir()}/../include/wb_arbiter.sv', f'hardware/remote_if_demo.srcs/hdl')
+    shutil.copy(f'{workdir()}/../include/wb_adapter.sv', f'hardware/remote_if_demo.srcs/hdl')
