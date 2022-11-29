@@ -13,9 +13,9 @@ This tool generates code for FPGA-I/O. It generates code for register-type bus-s
 - Generate SW code to control those registers (C, Python)
 - Generate documentation of those registers (Markdown)
 
-<img src="./doc/demo_03_sv.png" width="200" />
-<img src="./doc/demo_03_h.png" width="200" />
-<img src="./doc/demo_03_md.png" width="300" />
+<img src="./doc/demo_01-03_sv.png" width="200" />
+<img src="./doc/demo_01-03_h.png" width="200" />
+<img src="./doc/demo_01-03_md.png" width="300" />
 
 
 ### Bus Generation
@@ -23,6 +23,8 @@ This tool generates code for FPGA-I/O. It generates code for register-type bus-s
 - Define a flexible bus structure in Python
 - Generate HDL code for this bus (SystemVerilog)
 - Generate documentation of this bus (Markdown, Graphviz)
+
+<img src="./doc/demo_02-04.png" width="600" />
 
 
 ## Requirements
