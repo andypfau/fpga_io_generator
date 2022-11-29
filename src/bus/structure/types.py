@@ -77,8 +77,8 @@ class WbSlave(WbNode):
         base_address:  Absolute base address; set to ... for automatic addressing
         """
         self._requested_base_address = base_address
-        self._base_address = None
-        self._register_set = None # dtype: RegisterSet
+        self._base_address: typing.Optional[int] = None
+        self._register_set: typing.Optional[RegisterSet] = None
         super().__init__(name, port_size, granularity, address_size)
 
     
@@ -86,8 +86,8 @@ class WbSlave(WbNode):
     def from_register_set(register_set: "RegisterSet") -> "WbSlave":
         ''' Create a WbSlave from a RegisterSet '''
         adr_lo,adr_hi = register_set.address_bit_range()
-        n_addresses = adr_hi-adr_lo+1
-        slave = WbSlave(register_set.name, register_set.base_address, register_set.port_size, RegisterSet.granularity(), n_addresses)
+        address_size = adr_hi-adr_lo+1
+        slave = WbSlave(register_set.name, register_set.port_size, register_set.granularity(), address_size, register_set._requested_base_address)
         slave._register_set = register_set
         return slave
     
