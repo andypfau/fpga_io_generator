@@ -82,20 +82,18 @@ class RegisterCGenerator:
         """Headers (including quotes or brackets) that are included at the top of the code"""
         includes: list[str] = field(default_factory=lambda: ['"adapt_me_please.h"'])
 
-    def __init__(self, registers: RegisterSet, filename: str = 'Registers', address_shift: int = 0, format: Format = None):
+    def __init__(self, registers: RegisterSet, filename: str = 'Registers', format: Format = None):
         """
         registers:     the register set to create C-code from
         filename:      the intended name of the file (so that the "#include ..." is correct)
-        address_shift: all bus address will be shifted by this amount (can be positive or negative)
         format:        a RegisterCGenerator.Format object to control code generation
         """
         
         self.registers = registers
         self.filename = filename
-        self.address_shift = address_shift
         self.format = format if format is not None else RegisterCGenerator.Format()
 
-        gen = RegisterCGeneratorHelper(registers, filename, address_shift, format)
+        gen = RegisterCGeneratorHelper(registers, filename, format)
         self.code_header = gen.code_header
         self.code_source = gen.code_source
     
@@ -124,11 +122,10 @@ class RegisterCGenerator:
 
 class RegisterCGeneratorHelper:
 
-    def __init__(self, registers: RegisterSet, filename: str = 'Registers', address_shift: int = 0, format: "RegisterCGenerator.Format" = None):
+    def __init__(self, registers: RegisterSet, filename: str = 'Registers', format: "RegisterCGenerator.Format" = None):
 
         self.registers = registers
         self.filename = filename
-        self.address_shift = address_shift
         self.format = format if format is not None else RegisterCGenerator.Format()
 
         self.code_header = []
@@ -165,23 +162,13 @@ class RegisterCGeneratorHelper:
 
     def generate(self):
         from .gen_sw import RegisterSoftwareGenerator
-        RegisterSoftwareGenerator(self.registers, self.address_shift).generate(self)
+        RegisterSoftwareGenerator(self.registers).generate(self)
     
 
-    def define_basics(self, reg_size: int, addr_lo: int, addr_shift: "int|None"):
+    def define_basics(self, reg_size: int):
         
         self.reg_size = reg_size
         self.reg_type = reg_type(reg_size)
-        
-        self.addr_dead_const = 'ADDRESS_DEADBITS'
-        self.addr_shift_const = 'ADDRESS_SHIFT'
-        
-        self.code_defs.append('// address must be shifted this much to accomodate for the missing LSBs of the address vector')
-        self.code_defs.append(f'#define {self.addr_dead_const} ({addr_lo})')
-        if addr_shift is not None:
-            self.code_defs.append('// shift to compensate e.g. for bus adapters')
-            self.code_defs.append(f'#define {self.addr_shift_const} ({abs(addr_shift)})')
-        self.code_defs.append('')
     
 
     def begin_register(self, name: str, description: str, comment: str, abs_addr: int, is_readable: bool, is_writable: bool, is_resettable: bool, is_strobed: bool, need_shadow_read: bool, need_shadow_write: bool):
@@ -204,12 +191,7 @@ class RegisterCGeneratorHelper:
         if comment is not None:
             for line in comment.splitlines():
                 self.code_defs.append(f'// {line}')
-        if self.address_shift == 0:
-            self.code_defs.append(f'#define {self.r_addr_const} (0x{abs_addr:X} >> {self.addr_dead_const})')
-        elif self.address_shift < 0:
-            self.code_defs.append(f'#define {self.r_addr_const} ((0x{abs_addr:X} >> {self.addr_dead_const}) << {self.addr_shift_const})')
-        else:
-            self.code_defs.append(f'#define {self.r_addr_const} ((0x{abs_addr:X} >> {self.addr_dead_const}) >> {self.addr_shift_const})')
+        self.code_defs.append(f'#define {self.r_addr_const} (0x{abs_addr:X})')
         if need_shadow_read or need_shadow_write:
             self.code_defs.append(f'int {self.r_shadow_var} = 0;')
             self.code_defs.append(f'{self.reg_type} {self.r_dirty_var} = 0;')

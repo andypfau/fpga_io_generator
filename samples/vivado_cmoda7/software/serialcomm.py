@@ -16,19 +16,12 @@ class SerialComm:
         self.term_char = '\n'
         self.data_counter = 0
     
-    def write_reg_masked(self, address: int, data: int, mask: int=0xFFFFFFFFFFFFFFFF, hold_cyc: bool = False):
-        if hold_cyc:
-            raise NotImplementedError()
+    def write_reg(self, address: int, data: int, mask: int=0xFFFFFFFFFFFFFFF):
         tx = self._get_buf('w', address, data, mask)
         rx = self._write_read(tx)
         self._parse_buf(rx)
     
-    def write_reg(self, address: int, data: int, hold_cyc: bool = False):
-        self.write_reg_masked(address, data, 0xFFFFFFFFFFFFFFFF, hold_cyc)
-    
-    def read_reg(self, address: int, hold_cyc: bool = False):
-        if hold_cyc:
-            raise NotImplementedError()
+    def read_reg(self, address: int):
         tx = self._get_buf('r', address)
         rx = self._write_read(tx)
         data = self._parse_buf(rx)

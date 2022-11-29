@@ -6,6 +6,10 @@ This tool generates code for FPGA-I/O. It generates code for register-type bus-s
 
 ## Features
 
+Synthesizable SystemVerilog code:
+
+> <img src="./doc/demo_03_synth.png" width="300" />
+
 ### Register Generation
 
 - Define a flexible register structure in Python

@@ -19,3 +19,8 @@ samples/vivado_cmoda7/hardware/vivado_cmoda7.srcs/hdl/wb_adapter.sv
 samples/vivado_cmoda7/hardware/vivado_cmoda7.srcs/hdl/wb_arbiter.sv
 samples/vivado_cmoda7/hardware/vivado_cmoda7.srcs/hdl/wb_bus.sv
 samples/vivado_cmoda7/hardware/vivado_cmoda7.srcs/hdl/wb_interface.sv
+
+# Vivado artifacts
+samples/vivado_cmoda7/hardware/vivado_cmoda7.hw/**
+samples/vivado_cmoda7/hardware/vivado_cmoda7.cache/**
+samples/vivado_cmoda7/hardware/vivado_cmoda7.runs/**

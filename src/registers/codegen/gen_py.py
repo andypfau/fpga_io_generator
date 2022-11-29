@@ -28,20 +28,18 @@ class RegisterPyGenerator:
         import_clauses: list[str] = field(default_factory=lambda: [])
 
 
-    def __init__(self, registers: RegisterSet, address_shift: int = 0, format: Format = None):
+    def __init__(self, registers: RegisterSet, format: Format = None):
         """
         registers:     the register set to create Python code from
-        address_shift: all bus address will be shifted by this amount (can be positive or negative)
         format:        a RegisterPyGenerator.Format object to control code generation
         """
         
         self.registers = registers
-        self.address_shift = address_shift
         self.format = format if format is not None else RegisterPyGenerator.Format()
 
         check_names(self.registers)
 
-        gen = RegisterPyGeneratorHelper(registers, address_shift, format)
+        gen = RegisterPyGeneratorHelper(registers, format)
         self.code = gen.final_code
     
 
@@ -84,10 +82,9 @@ class ShadowVar:
 
 class RegisterPyGeneratorHelper:
 
-    def __init__(self, registers: RegisterSet, address_shift: int = 0, format: "RegisterPyGenerator.Format" = None):
+    def __init__(self, registers: RegisterSet, format: "RegisterPyGenerator.Format" = None):
 
         self.registers = registers
-        self.address_shift = address_shift
         self.format = format if format is not None else RegisterPyGenerator.Format()
 
         self.code_main = []
@@ -135,16 +132,11 @@ class RegisterPyGeneratorHelper:
 
     def generate(self):
         from .gen_sw import RegisterSoftwareGenerator
-        RegisterSoftwareGenerator(self.registers, self.address_shift).generate(self)
+        RegisterSoftwareGenerator(self.registers).generate(self)
     
 
-    def define_basics(self, reg_size: int, addr_lo: int, addr_shift: "int|None"):
-        self.addr_dead_const = f'self._addr_deadbits'
-        self.addr_shift_const = f'self._addr_shift'
-        self.code_defs.append(f'\t\t{self.addr_dead_const} = {addr_lo} # address must be shifted this much to accomodate for the missing LSBs of the address vector')
-        if addr_shift is not None:
-            self.code_defs.append(f'\t\t{self.addr_shift_const} = {abs(addr_shift)} # shift to compensate e.g. for bus adapters')
-        self.code_defs.append('')
+    def define_basics(self, reg_size: int):
+        ...
     
 
     def begin_register(self, name: str, description: str, comment: str, abs_addr: int, is_readable: bool, is_writable: bool, is_resettable: bool, is_strobed: bool, need_shadow_read: bool, need_shadow_write: bool):
@@ -167,12 +159,7 @@ class RegisterPyGeneratorHelper:
         if comment is not None:
             for line in comment.splitlines():
                 self.code_defs.append(f'\t\t# {line}')
-        if self.address_shift == 0:
-            self.code_defs.append(f'\t\t{self.r_addr_const} = (0x{abs_addr:X} >> {self.addr_dead_const})')
-        elif self.address_shift < 0:
-            self.code_defs.append(f'\t\t{self.r_addr_const} = (0x{abs_addr:X} >> {self.addr_dead_const}) << {self.addr_shift_const}')
-        else:
-            self.code_defs.append(f'\t\t{self.r_addr_const} = (0x{abs_addr:X} >> {self.addr_dead_const}) >> {self.addr_shift_const}')
+        self.code_defs.append(f'\t\t{self.r_addr_const} = 0x{abs_addr:X}')
         if need_shadow_read or need_shadow_write:
             self.code_defs.append(f'\t\t{self.r_shadow_var} = 0')
             self.code_defs.append(f'\t\t{self.r_dirty_var} = False')

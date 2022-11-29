@@ -9,7 +9,7 @@ from abc import ABC, abstractmethod
 
 
 class AbstractRegisterScripter(ABC):
-    def define_basics(self, reg_size: int, addr_lo: int, addr_shift: "int|None"): ...
+    def define_basics(self, reg_size: int): ...
     def begin_register(self, name: str, description: str, comment: str, abs_addr: int, is_readable: bool, is_writable: bool, is_resettable: bool, is_strobed: bool, need_shadow_read: bool, need_shadow_write: bool): ...
     def begin_field(self, name: str, description: str, comment: str, f_offs: int, f_size: int, f_bitmask: int, f_wordmask: int, dtype: FieldType, default: int): ...
     def add_read_func(self): ...
@@ -27,9 +27,8 @@ class AbstractRegisterScripter(ABC):
 class RegisterSoftwareGenerator:
 
 
-    def __init__(self, registers: RegisterSet, address_shift: int = 0):
+    def __init__(self, registers: RegisterSet):
         self.registers = registers
-        self.address_shift = address_shift
 
 
     def _can_write_masked(self, fields: "list[Field]", field_index: int) -> bool:
@@ -55,10 +54,8 @@ class RegisterSoftwareGenerator:
     def generate(self, scripter: AbstractRegisterScripter):
 
         check_names(self.registers)
-        
-        adr_lo = int(math.ceil(math.log2(self.registers.port_size//8)))
 
-        scripter.define_basics(self.registers.port_size, adr_lo, abs(self.address_shift) if self.address_shift!=0 else None)
+        scripter.define_basics(self.registers.port_size)
         
         for reg in self.registers.registers:
 
