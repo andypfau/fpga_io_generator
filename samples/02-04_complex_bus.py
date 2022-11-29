@@ -18,8 +18,8 @@ if __name__ == '__main__':
     s2 = WbSlave('I/O Expander',   32, 8,  3, ...)
     s3 = WbSlave('PWM Generator',  16, 8,  3, ...)
     
-    b = WbBus('MyBus', [m1, m2], [s1, s2, s3])
+    b = WbBus('My Bus', [m1, m2], [s1, s2, s3])
 
-    BusSvGenerator(b, 'my_bus').save(filename_code=f'{NAME}.sv')
+    BusSvGenerator(b).save(filename_code=f'{NAME}.sv')
     BusGraphGenerator(b).save(f'{NAME}.png')
     BusMdGenerator(b).save(f'{NAME}.md')

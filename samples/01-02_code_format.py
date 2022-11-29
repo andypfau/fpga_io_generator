@@ -12,12 +12,12 @@ if __name__ == '__main__':
 
 
     # Same register as in the last demo
-    regset = RegisterSet(name='my_registers', base_address=0x00, port_size=16, registers=[
-        Register(name='config', description='Config Data', address=0x00, regtype=RegType.Write, fields=[
-            Field(name='speed', description='Speed Value', bits=[7,0], datatype=FieldType.Unsigned8Bit, functions=FieldFunction.WriteMasked),
-            Field(name='offset', description='Offset Value', bits=[15,8], datatype=FieldType.Signed8Bit, functions=FieldFunction.WriteMasked)]),
-        Register(name='status', description='Status', address=0x02, regtype=RegType.Read, fields=[
-            Field(name='speed', description='Speed Value', bits=[0,0], datatype=FieldType.Boolean, functions=FieldFunction.Read)])])
+    regset = RegisterSet(name='My Registers', base_address=0x00, port_size=16, registers=[
+        Register(name='Config', description='Config Data', address=0x00, regtype=RegType.Write, fields=[
+            Field(name='Speed', description='Speed Value', bits=[7,0], datatype=FieldType.Unsigned8Bit, functions=FieldFunction.WriteMasked),
+            Field(name='Offset', description='Offset Value', bits=[15,8], datatype=FieldType.Signed8Bit, functions=FieldFunction.WriteMasked)]),
+        Register(name='Status', description='Status', address=0x02, regtype=RegType.Read, fields=[
+            Field(name='Speed', description='Speed Value', bits=[0,0], datatype=FieldType.Boolean, functions=FieldFunction.Read)])])
 
 
     # This time, we apply some configuration
@@ -26,7 +26,7 @@ if __name__ == '__main__':
     sv_fmt = RegisterSvGenerator.Format(
         flag_suffix = '_flg', # apply the suffix '_flg' to flag registers
     )
-    sv = RegisterSvGenerator(regset, modulename='my_registers', format=sv_fmt)
+    sv = RegisterSvGenerator(regset, format=sv_fmt)
     sv.save(
         filename_instance_template=f'{NAME}_instance_template.sv',
         filename_code=f'{NAME}.sv')
@@ -50,7 +50,7 @@ if __name__ == '__main__':
         write_masked_func='wrm', # to write to the bus with a word-mask, call this function
         accessor_obj=True, # we will get handed an object on which we can call the above methods
     )
-    py = RegisterPyGenerator(regset, 'MyRegisters', format=py_fmt)
+    py = RegisterPyGenerator(regset, format=py_fmt)
     py.save(f'{NAME}_object.py')
 
     ################
@@ -63,10 +63,10 @@ if __name__ == '__main__':
         accessor_obj=False, # no object is handed over, we must rely on some global object
         import_clauses=['from MyHwAccess import hw_rd, hw_wr, hw_wrm'],
     )
-    py = RegisterPyGenerator(regset, 'MyRegisters', format=py_fmt)
+    py = RegisterPyGenerator(regset, format=py_fmt)
     py.save(f'{NAME}_global.py')
 
     
     # The Markdown generator currently has no options
-    md = RegisterMdGenerator(regset, 'My Registers')
+    md = RegisterMdGenerator(regset)
     md.save(f'{NAME}.md')

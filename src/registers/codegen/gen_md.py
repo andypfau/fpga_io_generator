@@ -9,11 +9,10 @@ import enum
 
 class RegisterMdGenerator:
 
-    def __init__(self, registers: RegisterSet, name: str = None):
+    def __init__(self, registers: RegisterSet):
         self.registers = registers
-        self.name = name if name is not None else 'Register Set'
         
-        gen = RegisterMdGeneratorHelper(registers, name)
+        gen = RegisterMdGeneratorHelper(registers)
         self.md = gen.md
     
 
@@ -30,9 +29,8 @@ class RegisterMdGenerator:
 class RegisterMdGeneratorHelper:
 
 
-    def __init__(self, registers: RegisterSet, name: str):
+    def __init__(self, registers: RegisterSet):
         self.registers = registers
-        self.name = name
         
         self.generate()
     
@@ -41,7 +39,7 @@ class RegisterMdGeneratorHelper:
         
         md = []
 
-        md.append(self.name)
+        md.append(self.registers.name)
         md.append('==========')
         md.append('')
         md.append(f'Base address is 0x{self.registers.get_base_address():08X}.')

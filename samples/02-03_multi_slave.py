@@ -12,10 +12,10 @@ if __name__ == '__main__':
 
     m = WbMaster('MCU',            32,  8, 16)
     s1 = WbSlave('User Interface',  8,  8,  5, 0x0000)
-    s2 = WbSlave('Io Expander',    32, 16,  3, 0x1000)
+    s2 = WbSlave('I/O Expander',   32, 16,  3, 0x1000)
     s3 = WbSlave('PWM Generator',  16, 16,  3, 0x2000)
-    b = WbBus('MyBus', [m], [s1, s2, s3])
+    b = WbBus('My Bus', [m], [s1, s2, s3])
 
-    BusSvGenerator(b, 'my_bus').save(filename_code=f'{NAME}.sv')
+    BusSvGenerator(b).save(filename_code=f'{NAME}.sv')
     BusGraphGenerator(b).save(f'{NAME}.png')
     BusMdGenerator(b).save(f'{NAME}.md')

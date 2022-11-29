@@ -16,25 +16,25 @@ if __name__ == '__main__':
         # - This set of registers starts at base address 0x00
         # - It registers are 16 bit each
         # - The granularity will always be 8 bit (cannot be configured)
-        name='my_registers', base_address=0x00, port_size=16, registers=[
+        name='My Registers', base_address=0x00, port_size=16, registers=[
 
         # This is the first register
         Register(
             # - It is at address offset 0
             # - It is writable (but not readable)
-            name='config', description='Config Data', address=0x00, regtype=RegType.Write, fields=[
+            name='Config', description='Config Data', address=0x00, regtype=RegType.Write, fields=[
 
                 # Iniside this register, we define a field (a slice of bits that represent some information)
                 Field(
                     # - It represents an unsigned 8-bit value, which spans bits 7:0
                     # - It can be written using a mask (i.e. writing to it won't affect neighbouring fields)
-                    name='speed', description='Speed Value', bits=[7,0], datatype=FieldType.Unsigned8Bit, functions=FieldFunction.WriteMasked),
+                    name='Speed', description='Speed Value', bits=[7,0], datatype=FieldType.Unsigned8Bit, functions=FieldFunction.WriteMasked),
 
                 # Iniside this register, we define a field (a slice of bits that represent some information)
                 Field(
                     # - It represents a signed 8-bit value, which spans bits 15:8
                     # - It can be written using a mask
-                    name='offset', description='Offset Value', bits=[15,8], datatype=FieldType.Signed8Bit, functions=FieldFunction.WriteMasked),
+                    name='Offset', description='Offset Value', bits=[15,8], datatype=FieldType.Signed8Bit, functions=FieldFunction.WriteMasked),
             ],
         ),
 
@@ -42,11 +42,11 @@ if __name__ == '__main__':
         Register(
             # - It is at the next free address offset (the ellipsis means that the address is auto-incremented)
             # - It is readable (but not writable)
-            name='status', description='Status', address=..., regtype=RegType.Read, fields=[
+            name='Status', description='Status', address=..., regtype=RegType.Read, fields=[
 
                 Field(
                     # - This field represents a boolean flag, which resides in bit 0
-                    name='speed', description='Speed Value', bits=[0,0], datatype=FieldType.Boolean, functions=FieldFunction.Read),
+                    name='Speed', description='Speed Value', bits=[0,0], datatype=FieldType.Boolean, functions=FieldFunction.Read),
             ],
         ),
     ])
@@ -72,12 +72,12 @@ if __name__ == '__main__':
     c.save(filename_header=f'{NAME}.h', filename_code=f'{NAME}.c')
 
     # Alternatively, we can generate Python code
-    py = RegisterPyGenerator(regset, 'MyRegisters')
+    py = RegisterPyGenerator(regset)
     py.save(f'{NAME}.py')
 
     
     # And we generate a documentation in Markdown format.
-    md = RegisterMdGenerator(regset, 'My Registers')
+    md = RegisterMdGenerator(regset)
     md.save(f'{NAME}.md')
     
     # Note that the generated C/Py code currently makes some assumptions about some included files. This will

@@ -1,17 +1,18 @@
 from ..tools import get_adr_bits
+from ...tools import make_sourcecode_name, NamingConvention
 from ..structure.types import WbBus, WbMaster, WbSlave, WbNode
 
-import math, warnings
+import math
+import re
 
 
 
 class BusSvGenerator:
 
-    def __init__(self, bus: 'WbBus', module_name: str = 'wishbone_bus'):
+    def __init__(self, bus: 'WbBus'):
         self.bus = bus
-        self.module_name = module_name
         
-        gen = BusSvGeneratorHelper(bus, module_name)
+        gen = BusSvGeneratorHelper(bus)
         self.instance = gen.instance
         self.implementation = gen.implementation
     
@@ -36,15 +37,21 @@ class BusSvGenerator:
 
 class BusSvGeneratorHelper:
 
-    def __init__(self, bus: 'WbBus', module_name: str = 'wishbone_bus'):
+    def __init__(self, bus: 'WbBus'):
         self.bus = bus
-        self.module_name = module_name
 
         self.bus.check()
         self.update()
      
     
     def update(self):
+
+        def module_name(name: str) -> str:
+            return make_sourcecode_name(name, NamingConvention.snake_case)
+        def signal_name(name: str) -> str:
+            return make_sourcecode_name(name, NamingConvention.snake_case)
+        def placeholder_name(name: str) -> str:
+            return make_sourcecode_name(name, NamingConvention.CONSTANT_CASE)
         
         from ..structure.types import WbBusTopology
 
@@ -58,17 +65,17 @@ class BusSvGeneratorHelper:
         inst = []
 
         for master in self.bus.masters:
-            inst.append(f'wishbone #(.ADR_BITS({master.address_size}), .PORT_SIZE({master.port_size}), .GRANULARITY({master.granularity})) __INTERFACE_{master.name.upper()}_PLACEHOLDER__();')
+            inst.append(f'wishbone #(.ADR_BITS({master.address_size}), .PORT_SIZE({master.port_size}), .GRANULARITY({master.granularity})) __INTERFACE_{placeholder_name(master.name)}_PLACEHOLDER__();')
         for slave in self.bus.slaves:
-            inst.append(f'wishbone #(.ADR_BITS({slave.address_size}), .PORT_SIZE({slave.port_size}), .GRANULARITY({slave.granularity})) __INTERFACE_{slave.name.upper()}_PLACEHOLDER__();')
+            inst.append(f'wishbone #(.ADR_BITS({slave.address_size}), .PORT_SIZE({slave.port_size}), .GRANULARITY({slave.granularity})) __INTERFACE_{placeholder_name(slave.name)}_PLACEHOLDER__();')
         inst.append(f'')
-        inst.append(f'{self.module_name} __INSTANCENAME_PLACEHOLDER__ (')
+        inst.append(f'{module_name(self.bus.name)} __INSTANCENAME_PLACEHOLDER__ (')
         inst.append(f'\t.rst_i(__SIGNAL_RESET_PLACEHOLDER__),')
         inst.append(f'\t.clk_i(__SIGNAL_CLOCK_PLACEHOLDER__),')
         for master in self.bus.masters:
-            inst.append(f'\t.{master.name}_mi(__INTERFACE_{master.name.upper()}_PLACEHOLDER__),')
+            inst.append(f'\t.{signal_name(master.name)}_mi(__INTERFACE_{placeholder_name(master.name)}_PLACEHOLDER__),')
         for slave in self.bus.slaves:
-            inst.append(f'\t.{slave.name}_so(__INTERFACE_{slave.name.upper()}_PLACEHOLDER__),')
+            inst.append(f'\t.{signal_name(slave.name)}_so(__INTERFACE_{placeholder_name(slave.name)}_PLACEHOLDER__),')
         inst[-1] = inst[-1][0:-1] # remove the last comma
         inst.append(');')
         inst.append('')
@@ -86,19 +93,19 @@ class BusSvGeneratorHelper:
             impl.append(f'//     0x{slave.get_base_address():08X}: {slave.name}')
         impl.append(f'')
         impl.append(f'')
-        impl.append(f'module {self.module_name} (')
+        impl.append(f'module {module_name(self.bus.name)} (')
         impl.append(f'')
         impl.append(f'\tinput wire clk_i,')
         impl.append(f'\tinput wire rst_i,')
         impl.append(f'\t')
 
         for master in self.bus.masters:
-            impl.append(f'\twishbone.slave {master.name}_mi,')
+            impl.append(f'\twishbone.slave {module_name(master.name)}_mi,')
         
         impl.append(f'\t')
         
         for slave in self.bus.slaves:
-            impl.append(f'\twishbone.master {slave.name}_so,')
+            impl.append(f'\twishbone.master {module_name(slave.name)}_so,')
         
         impl.append(f'\t')
         
@@ -132,9 +139,9 @@ class BusSvGeneratorHelper:
                 if component.port_size==bus_port_size and component.granularity==bus_granularity:
                     # can be connected directly
                     suffix = '_mi' if is_master else '_so'
-                    adapted_names[component.name] = component.name + suffix
+                    adapted_names[component.name] = signal_name(component.name) + suffix
                 else: # need adapter
-                    n = component.name + '_adapted_w'
+                    n = signal_name(component.name) + '_adapted_w'
                     adapted_names[component.name] = n
                     if is_master:
                         a,p,g = bus_address_size, bus_port_size, bus_granularity
@@ -150,8 +157,8 @@ class BusSvGeneratorHelper:
                         adapter_impls.append(f'\t.SLAVE_ADR_BITS({bus_address_size}),')
                         adapter_impls.append(f'\t.SLAVE_PORT_SIZE({bus_port_size}),')
                         adapter_impls.append(f'\t.SLAVE_GRANULARITY({bus_granularity})')
-                        adapter_impls.append(f') wb_adapter_bus_to_slave_{component.name} (')
-                        adapter_impls.append(f'\t.master_m({component.name}_mi),')
+                        adapter_impls.append(f') wb_adapter_bus_to_slave_{module_name(component.name)} (')
+                        adapter_impls.append(f'\t.master_m({module_name(component.name)}_mi),')
                         adapter_impls.append(f'\t.slave_s({n})')
                     else:
                         adapter_impls.append(f'\t.MASTER_ADR_BITS({bus_address_size}),')
@@ -160,9 +167,9 @@ class BusSvGeneratorHelper:
                         adapter_impls.append(f'\t.SLAVE_ADR_BITS({component.address_size}),')
                         adapter_impls.append(f'\t.SLAVE_PORT_SIZE({component.port_size}),')
                         adapter_impls.append(f'\t.SLAVE_GRANULARITY({component.granularity})')
-                        adapter_impls.append(f') wb_adapter_slave_{component.name}_to_bus (')
+                        adapter_impls.append(f') wb_adapter_slave_{module_name(component.name)}_to_bus (')
                         adapter_impls.append(f'\t.master_m({n}),')
-                        adapter_impls.append(f'\t.slave_s({component.name}_so)')
+                        adapter_impls.append(f'\t.slave_s({module_name(component.name)}_so)')
                     adapter_impls.append(f');')
             return adapted_names
         adapted_names = {}
@@ -205,8 +212,7 @@ class BusSvGeneratorHelper:
                 impl.append(f'assign {adapted_names[master.name]}.rty = bus_rty_l;')
             
             else:
-                names = [m.name for m in self.bus.masters]
-                m_cycs = [f'{adapted_names[n]}.cyc' for n in names]
+                m_cycs = [f'{adapted_names[m.name]}.cyc' for m in self.bus.masters]
 
                 impl.append(f'/////////////////////////////////////////////////////////////')
                 impl.append(f'// multi-master arbiter')

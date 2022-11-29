@@ -12,14 +12,14 @@ if __name__ == '__main__':
 
     # We define a master and a slave; they both are compatible in this case (32 bit wide, 8 bit granularity)
     m = WbMaster('MCU', 32, 8, 16)
-    s = WbSlave('RegisterSet', 32, 8, 2, 0)
+    s = WbSlave('Registers', 32, 8, 2, 0)
 
     # Now we define a simple bus, which only has that master and that slave
-    b = WbBus('MyBus', [m], [s])
+    b = WbBus('My Bus', [m], [s])
 
 
     # This class generates the SystemVerilog source code for that bus, plus a template for the instantiation.
-    BusSvGenerator(b, 'my_bus').save(
+    BusSvGenerator(b).save(
         filename_instance_template=f'{NAME}_instance_template.sv',
         filename_code=f'{NAME}.sv')
 
