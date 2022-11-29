@@ -2,6 +2,7 @@
 
 for pyfile in *.py;
 do
+    echo "Running demo <$pyfile>..."
     python $pyfile
     if [[ $? -ne 0 ]] ; then
         echo

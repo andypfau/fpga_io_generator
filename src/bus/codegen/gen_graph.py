@@ -61,6 +61,9 @@ class BusGraphGeneratorHelper:
         g = Digraph('G', filename=self.filename)
         g.attr('graph', rankdir='LR', splines='ortho')
 
+        highest_slave_base_address = max([s.get_base_address() for s in self.bus.slaves])
+        slave_addr_strlen = len(f'{highest_slave_base_address:X}')
+
         def bus_type_str(n: "WbNode") -> str:
             return f'{n.port_size}/{n.granularity}'
         def m_id(m:'WbMaster'):
@@ -74,7 +77,7 @@ class BusGraphGeneratorHelper:
         def s_name(s:'WbSlave'):
             return f'{s.name}\n{bus_type_str(s)}'
         def s_label(s:'WbSlave'):
-            return f'0x{s.get_base_address():X}'
+            return f'0x{s.get_base_address():0{slave_addr_strlen}X}'
         
         def master_style(g: Graph):
             g.attr('node', shape='rect', style='rounded,filled,bold', fillcolor='HotPink', margin='0.4,0.2')
