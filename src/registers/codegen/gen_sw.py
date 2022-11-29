@@ -10,7 +10,7 @@ from abc import ABC, abstractmethod
 
 class AbstractRegisterScripter(ABC):
     def define_basics(self, reg_size: int, addr_lo: int, addr_shift: "int|None"): ...
-    def begin_register(self, name: str, description: str, comment: str, abs_addr: int, is_readable: bool, is_writable: bool, is_resettable: bool, is_strobed: bool, need_shadow_variable: bool): ...
+    def begin_register(self, name: str, description: str, comment: str, abs_addr: int, is_readable: bool, is_writable: bool, is_resettable: bool, is_strobed: bool, need_shadow_read: bool, need_shadow_write: bool): ...
     def begin_field(self, name: str, description: str, comment: str, f_offs: int, f_size: int, f_bitmask: int, f_wordmask: int, dtype: FieldType, default: int): ...
     def add_read_func(self): ...
     def add_read_shadow_func(self): ...
@@ -70,16 +70,16 @@ class RegisterSoftwareGenerator:
             r_strobed = reg.regtype in [RegType.Strobe, RegType.Handshake]
             r_event = reg.regtype in [RegType.ReadEvent]
 
-            need_shadow_variable = False
+            need_shadow_read = need_shadow_write = False
             for i_field,field in enumerate(reg.fields):
-                if FieldFunction.ReadShadow in field.functions:
-                    need_shadow_variable = True
-                if FieldFunction.WriteShadow in field.functions:
-                    need_shadow_variable = True
+                if FieldFunction.ReadShadow in field.functions and (r_readable or r_event):
+                    need_shadow_read = True
+                if FieldFunction.WriteShadow in field.functions and r_writable:
+                    need_shadow_write = True
             if r_strobed:
-                need_shadow_variable = False
+                need_shadow_read = need_shadow_write = False
 
-            scripter.begin_register(reg.name, reg.description, reg.comment, abs_addr, r_readable, r_writable, r_resettable, r_strobed, need_shadow_variable)
+            scripter.begin_register(reg.name, reg.description, reg.comment, abs_addr, r_readable or r_event, r_writable, r_resettable, r_strobed, need_shadow_read, need_shadow_write)
 
             for i_field,field in enumerate(reg.fields):
 
@@ -108,15 +108,13 @@ class RegisterSoftwareGenerator:
                 
                 if FieldFunction.ReadShadow in field.functions:
 
-                    read_required = FieldFunction.Read in field.functions
+                    supports_write_shadow = FieldFunction.WriteShadow in field.functions
 
-                    if (read_required) and (not r_readable) and (not r_event):
-
+                    # ReadShadow is still valid if WriteShadow is supported (to read back what was written)
+                    if (not r_readable) and (not r_event) and (not supports_write_shadow):
                         raise TypeError(f'Field {self.registers.name}.{reg.name}.{field.name} cannot do read (register {self.registers.name}.{reg.name} needs read access)')
                     
-                    if read_required:
-                        
-                        scripter.add_read_shadow_func()
+                    scripter.add_read_shadow_func()
 
                 
                 if FieldFunction.Overwrite in field.functions:

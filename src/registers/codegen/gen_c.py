@@ -4,6 +4,7 @@ from ...tools import check_names, make_sourcecode_name, NamingConvention
 from dataclasses import dataclass, field
 import math
 import re
+import typing
 
 
 def field_type(t):
@@ -53,6 +54,15 @@ def var_name(name: str) -> str:
 def const_name(name: str) -> str:
     return make_sourcecode_name(name, NamingConvention.CONSTANT_CASE)
 
+
+@dataclass
+class ShadowVar:
+    fn_name: str
+    shadow_var: str
+    dirty_var: str
+    is_readable: bool
+    shadow_read: bool
+    shadow_write: bool
 
 
 class RegisterCGenerator:
@@ -127,7 +137,7 @@ class RegisterCGeneratorHelper:
         self.code_public_funcs = []
         self.code_private_funcs = []
         self.code_reset = []
-        self.shadow_vars = []
+        self.shadow_vars: typing.Optional[list[ShadowVar]] = []
 
         check_names(self.registers)
 
@@ -174,18 +184,19 @@ class RegisterCGeneratorHelper:
         self.code_defs.append('')
     
 
-    def begin_register(self, name: str, description: str, comment: str, abs_addr: int, is_readable: bool, is_writable: bool, is_resettable: bool, is_strobed: bool, need_shadow_variable: bool):
+    def begin_register(self, name: str, description: str, comment: str, abs_addr: int, is_readable: bool, is_writable: bool, is_resettable: bool, is_strobed: bool, need_shadow_read: bool, need_shadow_write: bool):
         
         self.r_readable = is_readable
         self.r_writable = is_writable
         self.r_resettable = is_resettable
         self.r_strobed = is_strobed
-        self.r_need_shadow = need_shadow_variable
+        self.r_shadow_read = need_shadow_read
+        self.r_shadow_write = need_shadow_write
 
         self.r_shadow_var = f'register_{var_name(name)}_shadow'
         self.r_dirty_var = f'register_{var_name(name)}_dirty'
-        if need_shadow_variable:
-            self.shadow_vars.append((name, self.r_shadow_var, self.r_dirty_var, is_readable))
+        if need_shadow_read or need_shadow_write:
+            self.shadow_vars.append(ShadowVar(fn_name(name), self.r_shadow_var, self.r_dirty_var, is_readable, need_shadow_read, need_shadow_write))
         
         self.r_addr_const = f'REGISTER_{const_name(name)}_ADDRESS'
 
@@ -199,7 +210,7 @@ class RegisterCGeneratorHelper:
             self.code_defs.append(f'#define {self.r_addr_const} ((0x{abs_addr:X} >> {self.addr_dead_const}) << {self.addr_shift_const})')
         else:
             self.code_defs.append(f'#define {self.r_addr_const} ((0x{abs_addr:X} >> {self.addr_dead_const}) >> {self.addr_shift_const})')
-        if need_shadow_variable:
+        if need_shadow_read or need_shadow_write:
             self.code_defs.append(f'int {self.r_shadow_var} = 0;')
             self.code_defs.append(f'{self.reg_type} {self.r_dirty_var} = 0;')
         self.code_defs.append('')
@@ -258,16 +269,16 @@ class RegisterCGeneratorHelper:
         self.code_public_funcs.append(sig)
         self.code_public_funcs.append('{')
         if self.f_is_boolean:
-            self.code_public_funcs.append(f'\treturn ((self._read_{fn_name(self.reg_name)}() & {self.f_bitmask_const}) != 0);')
+            self.code_public_funcs.append(f'\treturn ((_read_{fn_name(self.reg_name)}() & {self.f_bitmask_const}) != 0);')
         else:
-            self.code_public_funcs.append(f'\treturn ((self._read_{fn_name(self.reg_name)}() & {self.f_bitmask_const}) >> {self.f_offs_const});')
+            self.code_public_funcs.append(f'\treturn ((_read_{fn_name(self.reg_name)}() & {self.f_bitmask_const}) >> {self.f_offs_const});')
         self.code_public_funcs.append('}')
         self.code_public_funcs.append('')
     
 
     def add_read_shadow_func(self):
                     
-        sig = f'{self.f_type} get_{fn_name(self.reg_name)}_{fn_name(self.field_name)}(_shadow(int load_shadow)'
+        sig = f'{self.f_type} get_{fn_name(self.reg_name)}_{fn_name(self.field_name)}_shadow(int load_shadow)'
         
         self.code_header.extend(self._field_comment)
         self.code_header.append(sig + ';')
@@ -326,7 +337,7 @@ class RegisterCGeneratorHelper:
 
     def add_read_modify_write_func(self):
                     
-        sig = f'void set_{fn_name(self.reg_name)}_{fn_name(self.field_name)}(_rmw({self.f_type} value, int lazy)'
+        sig = f'void set_{fn_name(self.reg_name)}_{fn_name(self.field_name)}_rmw({self.f_type} value, int lazy)'
                             
         self.code_header.extend(self._field_comment)
         self.code_header.append(sig + ';')
@@ -348,7 +359,7 @@ class RegisterCGeneratorHelper:
 
     def add_write_shadow_func(self):
                                                 
-        sig = f'void set_{fn_name(self.reg_name)}_{fn_name(self.field_name)}(_shadow({self.f_type} value, int flush)'
+        sig = f'void set_{fn_name(self.reg_name)}_{fn_name(self.field_name)}_shadow({self.f_type} value, int flush)'
 
         self.code_header.extend(self._field_comment)
         self.code_header.append(sig + ';')
@@ -394,10 +405,10 @@ class RegisterCGeneratorHelper:
 
         if self.r_writable:
             self.code_private_funcs.append(f'/* Intenal function to write to field <{self.field_name}> */')
-            self.code_private_funcs.append(f'void _write_{fn_name(self.reg_name)}(self, {self.f_type} value, int hold_cyc)')
+            self.code_private_funcs.append(f'void _write_{fn_name(self.reg_name)}({self.f_type} value, int hold_cyc)')
             self.code_private_funcs.append('{')
             self.code_private_funcs.append(f'\t{self.format.write_func}({self.r_addr_const}, value, hold_cyc);')
-            if self.r_need_shadow:
+            if self.r_shadow_read:
                 self.code_private_funcs.append(f'\t{self.r_shadow_var} = value;')
                 self.code_private_funcs.append(f'\t{self.r_dirty_var} = 0;')
             self.code_private_funcs.append('}')
@@ -405,7 +416,7 @@ class RegisterCGeneratorHelper:
 
         if self.r_writable and not self.r_strobed:
             self.code_private_funcs.append(f'/* Intenal function to do a masked write to field <{self.field_name}> */')
-            self.code_private_funcs.append(f'void _write_{fn_name(self.reg_name)}_masked(self, {self.f_type} value, int mask)')
+            self.code_private_funcs.append(f'void _write_{fn_name(self.reg_name)}_masked({self.f_type} value, int mask)')
             self.code_private_funcs.append('{')
             self.code_private_funcs.append(f'\t{self.format.write_masked_func}({self.r_addr_const}, value, mask);')
             self.code_private_funcs.append(f'\tfor (int b = 0; b < {self.registers.port_size//8}; b++)')
@@ -418,8 +429,8 @@ class RegisterCGeneratorHelper:
             self.code_private_funcs.append(f'/* Intenal function to read from field <{self.field_name}> */')
             self.code_private_funcs.append(f'{self.f_type} _read_{fn_name(self.reg_name)}(int hold_cyc)')
             self.code_private_funcs.append('{')
-            self.code_private_funcs.append(f'\tvalue = {self.format.read_func}({self.r_addr_const}, hold_cyc);')
-            if self.r_need_shadow:
+            self.code_private_funcs.append(f'\t{self.f_type} value = {self.format.read_func}({self.r_addr_const}, hold_cyc);')
+            if self.r_shadow_write:
                 self.code_private_funcs.append(f'\t{self.r_shadow_var} = value;')
                 self.code_private_funcs.append(f'\t{self.r_dirty_var} = 0;')
             self.code_private_funcs.append(f'\treturn value;')
@@ -447,32 +458,33 @@ class RegisterCGeneratorHelper:
         
         if len(self.shadow_vars)>0:
 
-            any_readable = False
-            
-            com = [
-                '// write all dirty shadow register contents to hardware',
-                '// set force=1 to force flushing, even if nothing changed locally'
-            ]
-            sig = 'void flush_shadow(int force)'
-            
-            self.code_header.extend(com)
-            self.code_header.append(sig + ';')
-            self.code_header.append('')
-            
-            self.code_public_funcs.extend(com)
-            self.code_public_funcs.append(sig)
-            self.code_public_funcs.append('{')
-            for n,s,d,r in self.shadow_vars:
-                self.code_public_funcs.append(f'\tif (force || {d})')
-                self.code_public_funcs.append('\t{')
-                self.code_public_funcs.append(f'\t\t_write_{n}({s});')
-                self.code_public_funcs.append(f'\t\t{self.r_dirty_var} = 0;')
-                self.code_public_funcs.append('\t}')
-                any_readable |= r
-            self.code_public_funcs.append('}')
-            self.code_public_funcs.append('')
+            any_shadow_write = any([s.shadow_write for s in self.shadow_vars])
+            if any_shadow_write:
+                com = [
+                    '// write all dirty shadow register contents to hardware',
+                    '// set force=1 to force flushing, even if nothing changed locally'
+                ]
+                sig = 'void flush_shadow(int force)'
+                
+                self.code_header.extend(com)
+                self.code_header.append(sig + ';')
+                self.code_header.append('')
+                
+                self.code_public_funcs.extend(com)
+                self.code_public_funcs.append(sig)
+                self.code_public_funcs.append('{')
+                for s in self.shadow_vars:
+                    if not s.shadow_write: continue
+                    self.code_public_funcs.append(f'\tif (force || {s.dirty_var})')
+                    self.code_public_funcs.append('\t{')
+                    self.code_public_funcs.append(f'\t\t_write_{s.fn_name}({s.shadow_var});')
+                    self.code_public_funcs.append(f'\t\t{s.dirty_var} = 0;')
+                    self.code_public_funcs.append('\t}')
+                self.code_public_funcs.append('}')
+                self.code_public_funcs.append('')
 
-            if any_readable:
+            any_shadow_read = any([s.shadow_read for s in self.shadow_vars])
+            if any_shadow_read:
                 com = '// read all shadow register contents from hardware (only readable registers)'
                 sig = 'void load_shadow(void)'
                 
@@ -483,9 +495,9 @@ class RegisterCGeneratorHelper:
                 self.code_public_funcs.append(com)
                 self.code_public_funcs.append(sig)
                 self.code_public_funcs.append('{')
-                for n,s,d,r in self.shadow_vars:
-                    if r:
-                        self.code_public_funcs.append(f'\t_read_{n}();')
+                for s in self.shadow_vars:
+                    if not s.shadow_read: continue
+                    self.code_public_funcs.append(f'\t_read_{s.fn_name}();')
                 self.code_public_funcs.append('}')
                 self.code_public_funcs.append('')
 
