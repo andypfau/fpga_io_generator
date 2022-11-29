@@ -1,7 +1,7 @@
-import math, warnings
+import math
 
 
-def check_names(registers, test_fn: callable = None):
+def check_names(registers: "WbRegisterSet", test_fn: "callable[str,None]|None" = None):
     
     regnames = set()
     for reg in registers.registers:
@@ -28,27 +28,6 @@ def check_names(registers, test_fn: callable = None):
     
     if len(regnames) < len(registers.registers):
         raise RuntimeError(f'Register names in {registers.name} are not unique')
-
-
-def get_register_addresses(registers: "RegisterSet") -> "map[str, int]":
-    
-    reg_addresses = {}
-    next_auto_address = 0
-    
-    for reg in registers.registers:
-        
-        if reg.address is Ellipsis:
-            addr = next_auto_address
-        else:
-            addr = reg.address
-        
-        if addr in reg_addresses.values():
-            raise RuntimeError(f'Register "{reg.name}" address (0x{addr:X}) is not unique')
-        
-        reg_addresses[reg.name] = addr
-        next_auto_address = addr + (registers.port_size // 8)
-
-    return reg_addresses
 
 
 def clog2(x: float) -> int:
@@ -85,6 +64,8 @@ def md_table(rows: "list[list[any]]") -> str:
 
 
 def binary_si(n: int, unit: str = '') -> str:
+    assert n >= 0
+    assert isinstance(n, int)
     prefix, factor = '', 1
     for e,p in [(4,'Ti'), (3,'Gi'), (2,'Mi'), (1,'ki')]:
         f = pow(2, 10*e)

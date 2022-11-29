@@ -1,6 +1,8 @@
 from ...registers import RegisterSet
 
-import math, dataclasses, enum, warnings
+import math
+import enum
+import typing
 
 
 
@@ -119,11 +121,11 @@ class WbBus:
         topology: Topology of the bus
         """
         self.name, self.masters, self.slaves, self.topology = name, masters, slaves, topology
+        self.bus_format: typing.Optional[WbNode] = None
         self.check()
         
         from .bus_solver import WbBusSolver
-        solver = WbBusSolver(self)
-        self.bus_format = solver.bus_format
+        WbBusSolver(self)
     
 
     def check(self):

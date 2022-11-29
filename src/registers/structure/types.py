@@ -3,6 +3,7 @@ from ...tools import clog2
 import dataclasses
 import enum
 import math
+import typing
 
 
 
@@ -94,7 +95,7 @@ class Field:
     datatype: FieldType
     
     """ SW functions to access this field """
-    functions: FieldFunction
+    functions: "FieldFunction"
     
     default: int = dataclasses.field(default=0)
     
@@ -105,41 +106,84 @@ class Field:
 
 
 
-@dataclasses.dataclass
 class Register:
+
+
+    def __init__(self, name: str, description: str, address: "int|Ellipsis", regtype: RegType, fields: list[Field],
+        write_event: WriteEventType = None, comment: str = None):
+        """
+        name:        
+        description: 
+        address:     
+        regtype:     
+        fields:      
+        write_event: 
+        comment:     
+        """
+
+        self.name, self.description, self._requested_address, self.regtype, self.fields, self.write_event, self.comment = \
+            name, description, address, regtype, fields, write_event, comment
+        self._rel_adr: typing.Optional[int] = None
+        self._abs_adr: typing.Optional[int] = None
     
-    name: str
+
+    def get_relative_address(self) -> int:
+        if self._rel_adr is None:
+            raise RuntimeError('This register was not properly initialized yet. Put it into a RegisterSet first.')
+        return self._rel_adr
     
-    description: str
-    
-    """ Relative addess of this register; set to ... for automatic numbering """
-    address: "int|Ellipsis"
-    
-    """ HW access to this register """
-    regtype: RegType
-    
-    fields: list[Field]
-    
-    """ Add a flag which is strobed when this register is written """
-    write_event: WriteEventType = dataclasses.field(default=None)
-    
-    comment: str = dataclasses.field(default=None)
+
+    def get_absolute_address(self) -> int:
+        if self._abs_adr is None:
+            raise RuntimeError('This register was not properly initialized yet. Put it into a RegisterSet first.')
+        return self._abs_adr
 
 
 
-@dataclasses.dataclass
 class RegisterSet:
 
-    name: str
-    """  Absolute base address """
-    base_address: int
-    """ Wishbone port size, in bits (note that granularity will alyways be 8 bit)"""
-    port_size: int
-    registers: list[Register]
+    def __init__(self, name: str, base_address: "int|Ellipsis", port_size: int, registers: "list[Register]"):
+        """
+        name:         Name of this register set
+        base_address: The address of the 1st register inside of the bus
+        port_size:    Port size, in bits (note that granularity will alyways be 8 bit)
+        registers:    List of registers within this register set
+        """
+
+        self.name, self._requested_base_address, self.port_size, self.registers = name, base_address, port_size, registers
+        
+        # this
+        self._base_address = Ellipsis
+        
+        self.check()
+        self._update()
+        
+    
+    def _update(self):
+        from .regset_solver import RegisterSetSolver
+        RegisterSetSolver(self)
+    
+
+    def get_base_address(self) -> int:
+        if self._base_address is Ellipsis:
+            if self._requested_base_address is Ellipsis:
+                return 0
+            else:
+                return self._requested_base_address
+        else:
+            return self._base_address
+    
+
+    def check(self):
+        
+        if len(self.registers)<1:
+            raise ValueError(f'Need at least one register')
+        
+        if len(self.registers) != len(set([s.name for s in self.registers])):
+            raise RuntimeError(f'Register names must be unique')
 
 
-    @staticmethod
-    def granularity() -> int:
+    def granularity(self) -> int:
         return 8
 
     

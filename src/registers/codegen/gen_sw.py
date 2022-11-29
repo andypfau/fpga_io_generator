@@ -1,5 +1,5 @@
 from ..structure.types import RegisterSet, RegType, FieldType, FieldFunction
-from ...tools import check_names, get_register_addresses
+from ...tools import check_names
 from .gen_py import RegisterPyGeneratorHelper
 
 import math, warnings
@@ -59,12 +59,10 @@ class RegisterSoftwareGenerator:
         adr_lo = int(math.ceil(math.log2(self.registers.port_size//8)))
 
         scripter.define_basics(self.registers.port_size, adr_lo, abs(self.address_shift) if self.address_shift!=0 else None)
-
-        reg_addresses = get_register_addresses(self.registers)
         
         for reg in self.registers.registers:
 
-            abs_addr = reg_addresses[reg.name] + self.registers.base_address
+            abs_addr = reg.get_absolute_address()
 
             r_readable = reg.regtype in [RegType.Read, RegType.WriteRead]
             r_writable = reg.regtype in [RegType.Write, RegType.WriteRead]

@@ -1,4 +1,4 @@
-from ...tools import check_names, get_register_addresses, md_table
+from ...tools import check_names, md_table
 from ..structure.types import RegType, RegisterSet, Register, WriteEventType, FieldChangeType, Field, FieldType, FieldFunction
 
 import math
@@ -34,7 +34,6 @@ class RegisterMdGeneratorHelper:
         self.registers = registers
         self.name = name
         
-        self.reg_addresses = get_register_addresses(self.registers)
         self.generate()
     
 
@@ -45,7 +44,7 @@ class RegisterMdGeneratorHelper:
         md.append(self.name)
         md.append('==========')
         md.append('')
-        md.append(f'Base address is 0x{self.registers.base_address:08X}.')
+        md.append(f'Base address is 0x{self.registers.get_base_address():08X}.')
         md.append('')
         md.append(f'All registers are {self.registers.port_size} bit wide, granularity is 8 bit')
 
@@ -58,9 +57,6 @@ class RegisterMdGeneratorHelper:
         table = [['Rel. Offset', 'Abs. Address', 'Name', 'Description', 'Access', 'Hardware', 'Comments']]
         comments = []
         for reg in self.registers.registers:
-            
-            addr = self.reg_addresses[reg.name]
-            abs_addr = addr + self.registers.base_address
             
             if reg.regtype == RegType.Write:
                 typ, hw = 'Write-Only', 'Out'
@@ -81,7 +77,7 @@ class RegisterMdGeneratorHelper:
                 comments.append(reg.comment)
                 com = len(comments)
             
-            table.append([f'0x{addr:08X}', f'0x{abs_addr:08X}', reg.name, reg.description, typ, hw, com])
+            table.append([f'0x{reg.get_relative_address():08X}', f'0x{reg.get_absolute_address():08X}', reg.name, reg.description, typ, hw, com])
 
         md.extend(md_table(table))
 

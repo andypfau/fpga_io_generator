@@ -1,4 +1,4 @@
-from ...tools import check_names, get_register_addresses, clog2
+from ...tools import check_names, clog2
 from ..structure.types import RegType, RegisterSet, Register, WriteEventType, FieldChangeType, Field, FieldType
 
 import math
@@ -68,7 +68,6 @@ class RegisterSvGeneratorHelper:
         self.modulename = modulename
         self.fmt = format if format is not None else RegisterSvGenerator.Format()
         
-        self.reg_addresses = get_register_addresses(self.registers)
         self.generate()
 
 
@@ -255,7 +254,7 @@ class RegisterSvGeneratorHelper:
                 if reg.regtype not in [RegType.Write, RegType.WriteRead, RegType.Read, RegType.Strobe, RegType.Handshake, RegType.ReadEvent]:
                     raise Exception(f'Invalid regtype: {reg.regtype}')
 
-                addr = self.reg_addresses[reg.name]
+                addr = reg.get_relative_address()
 
                 forbidden_mask = self.registers.port_size//8 - 1
                 if (addr & forbidden_mask) != 0:
@@ -400,7 +399,7 @@ class RegisterSvGeneratorHelper:
                 r_comment = 'event read-only'
             else:
                 raise Exception(f'Unknown regtype: {field["regtype"]}')
-            result.append(f'0x{self.reg_addresses[reg.name]:X}: <{reg.name}> ({r_comment}) {reg.description}')
+            result.append(f'0x{reg.get_relative_address():08X}: <{reg.name}> ({r_comment}) {reg.description}')
             if reg.comment:
                 result.append(f'    {reg.comment}')
             for field in reg.fields:
@@ -415,7 +414,7 @@ class RegisterSvGeneratorHelper:
         
         max_byteaddr = 0
         for reg in self.registers.registers:
-            max_byteaddr = max(max_byteaddr, self.reg_addresses[reg.name])
+            max_byteaddr = max(max_byteaddr, reg.get_relative_address())
 
         addr_lo = clog2(self.registers.port_size//8)
         addr_hi = max(addr_lo, clog2(max_byteaddr+1)-1)
