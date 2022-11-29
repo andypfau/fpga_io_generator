@@ -1,4 +1,4 @@
-from ...tools import check_names, clog2
+from ...tools import check_names, clog2, make_sourcecode_name, NamingConvention
 from ..structure.types import RegType, RegisterSet, Register, WriteEventType, FieldChangeType, Field, FieldType
 
 import math
@@ -32,12 +32,11 @@ class RegisterSvGenerator:
         handshake_ack_suffix: str = '_ack'
 
 
-    def __init__(self, registers: RegisterSet, modulename: str = 'controlinterface', format: Format = None):
+    def __init__(self, registers: RegisterSet, format: Format = None):
         self.registers = registers
-        self.modulename = modulename
         self.fmt = format if format is not None else RegisterSvGenerator.Format()
         
-        gen = RegisterSvGeneratorHelper(registers, modulename, format)
+        gen = RegisterSvGeneratorHelper(registers, format)
         self.instance = gen.instance
         self.implementation = gen.implementation
     
@@ -60,12 +59,20 @@ class RegisterSvGenerator:
 
 
 
+def module_name(name: str) -> str:
+    return make_sourcecode_name(name, NamingConvention.snake_case)
+def signal_name(name: str) -> str:
+    return make_sourcecode_name(name, NamingConvention.snake_case)
+def placeholder_name(name: str) -> str:
+    return make_sourcecode_name(name, NamingConvention.CONSTANT_CASE)
+
+
+
 class RegisterSvGeneratorHelper:
 
 
-    def __init__(self, registers: RegisterSet, modulename: str = 'controlinterface', format: "RegisterSvGenerator.Format" = None):
+    def __init__(self, registers: RegisterSet, format: "RegisterSvGenerator.Format" = None):
         self.registers = registers
-        self.modulename = modulename
         self.fmt = format if format is not None else RegisterSvGenerator.Format()
         
         self.generate()
@@ -90,7 +97,7 @@ class RegisterSvGeneratorHelper:
 
         impl.append('')
         impl.append('')
-        impl.append(f'module {self.modulename} (')
+        impl.append(f'module {module_name(self.registers.name)} (')
         impl.append('')
         impl.append(f'\tinput rst_i,')
         impl.append(f'\tinput clk_i,')
@@ -98,7 +105,7 @@ class RegisterSvGeneratorHelper:
         
         inst.append(f'wishbone #(.ADR_BITS({addr_hi+1}), .PORT_SIZE({self.registers.port_size}), .GRANULARITY({8})) __INTERFACE_PLACEHOLDER__();')
         inst.append(f'')
-        inst.append(f'{self.modulename} __INSTANCENAME_PLACEHOLDER__ (')
+        inst.append(f'{module_name(self.registers.name)} __INSTANCENAME_PLACEHOLDER__ (')
         inst.append(f'\t.rst_i(__SIGNAL_PLACEHOLDER__),')
         inst.append(f'\t.clk_i(__SIGNAL_PLACEHOLDER__),')
         
@@ -455,14 +462,14 @@ class RegisterSvGeneratorHelper:
         return regevent in [WriteEventType.StrobeOnWrite, WriteEventType.StrobeAfterWriteOnCycleEnd]
 
 
-    def get_strobe_varname(self, reg_name:str, is_io:bool, is_latch:bool=False):
+    def get_strobe_varname(self, reg_name: str, is_io:bool, is_latch:bool=False):
         if is_io :
             sigil = '_o'
         elif is_latch :
             sigil = '_latch_o'
         else:
             sigil = '_r'
-        return f'{self.fmt.strobed_prefix}{reg_name}_access{self.fmt.strobed_suffix}{sigil}'
+        return f'{self.fmt.strobed_prefix}{signal_name(reg_name)}_access{self.fmt.strobed_suffix}{sigil}'
 
     
     def get_field_size(self, field: Field) -> "tuple(int,int,int)":
@@ -476,7 +483,7 @@ class RegisterSvGeneratorHelper:
     def get_varname(self, reg: Register, field: Field, var_type: VarnameType) -> str:
 
         _,f_size,_ = self.get_field_size(field)
-        name = f'{reg.name}_{field.name}'
+        name = signal_name(f'{reg.name}_{field.name}')
 
         if self.is_handshake(reg.regtype):
             if var_type == VarnameType.AckPort:

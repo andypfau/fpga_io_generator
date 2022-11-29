@@ -90,7 +90,7 @@ def make_sourcecode_name(name: str, convention: "NamingConvention" = NamingConve
     is_mixed_case = re.search(r'[a-z]', name) is not None and re.search(r'[A-Z]', name) is not None
     contains_separators = re.search(r'[ _-]', name) is not None
     if is_mixed_case and not contains_separators:
-        cuts = [m.span()[0] for m in re.finditer(r'[A-Z]', name)]
+        cuts = [m.span()[0] for m in re.finditer(r'[A-Z]+', name)]
         pos = 0
         parts = []
         for cut in cuts:
