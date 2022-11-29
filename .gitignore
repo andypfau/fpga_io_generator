@@ -2,7 +2,7 @@
 samples/output
 
 # provided via generated code
-samples/vivado_cmoda7/docs/*
+#samples/vivado_cmoda7/docs/*
 samples/vivado_cmoda7/software/buttons.py
 samples/vivado_cmoda7/software/debug.py
 samples/vivado_cmoda7/software/leds.py
