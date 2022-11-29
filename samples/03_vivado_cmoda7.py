@@ -105,18 +105,23 @@ if __name__ == '__main__':
     b = WbBus('My Bus', [m_ctr, m_swp], [s_rpm, s_led, s_swp, s_btn, s_dbg])
 
     
+    py_fmt = RegisterPyGenerator.Format(
+        read_func='read_reg',
+        write_func='write_reg',
+        write_masked_func='write_reg',
+        accessor_obj=True,
+        import_clauses=[])
+    
     for regset in [r_pwm, r_led, r_swp, r_btn, r_dbg]:
         code_name = regset.name.lower().replace(' ', '_')
-        RegisterSvGenerator(regset).save(
-            filename_instance_template=f'{DIR}{code_name}_instance_template.sv',
-            filename_code=f'{DIR}{code_name}.sv')
-        RegisterPyGenerator(regset).save(f'{DIR}/software/{code_name}.py')
+        RegisterSvGenerator(regset).save(filename_code=f'{DIR}/hardware/remote_if_demo.srcs/hdl/{code_name}.sv')
+        RegisterPyGenerator(regset, format=py_fmt).save(f'{DIR}/software/{code_name}.py')
         RegisterMdGenerator(regset).save(f'{DIR}/docs/{code_name}.md')
     BusSvGenerator(b).save(filename_code=f'{DIR}/hardware/remote_if_demo.srcs/hdl/wb_bus.sv')
     BusGraphGenerator(b).save(f'{DIR}/docs/bus.png')
-    BusMdGenerator(b).save(f'{DIR}/docs/bus.md')
+    BusMdGenerator(b, graph_filename=f'bus.png').save(f'{DIR}/docs/bus.md')
 
     # copy some include-files
-    shutil.copy(f'{workdir()}/../include/wb_interface.sv', f'hardware/remote_if_demo.srcs/hdl')
-    shutil.copy(f'{workdir()}/../include/wb_arbiter.sv', f'hardware/remote_if_demo.srcs/hdl')
-    shutil.copy(f'{workdir()}/../include/wb_adapter.sv', f'hardware/remote_if_demo.srcs/hdl')
+    shutil.copy(f'{workdir()}/../include/wb_interface.sv', f'{DIR}/hardware/remote_if_demo.srcs/hdl')
+    shutil.copy(f'{workdir()}/../include/wb_arbiter.sv', f'{DIR}/hardware/remote_if_demo.srcs/hdl')
+    shutil.copy(f'{workdir()}/../include/wb_adapter.sv', f'{DIR}/hardware/remote_if_demo.srcs/hdl')

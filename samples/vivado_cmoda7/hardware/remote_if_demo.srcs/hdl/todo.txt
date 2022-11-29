@@ -1,5 +1,0 @@
-[x] Bus: decode addreses properly
-[x] Codegen: sync with current code
-[x] Wishbone address: down to 0 or to 2? Also affects ascii2wb
-[ ] ascii2wb <if (MASK_NIBBLES>1) begin...>
-[x] add comments in generated registers

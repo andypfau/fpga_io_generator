@@ -5,10 +5,10 @@ from ..structure.types import WbBus, WbNode, WbBusTopology
 
 class BusMdGenerator:
 
-    def __init__(self, bus: 'WbBus'):
+    def __init__(self, bus: 'WbBus', graph_filename: "str|None" = None):
         self.bus = bus
         
-        gen = BusMdGeneratorHelper(bus)
+        gen = BusMdGeneratorHelper(bus, graph_filename)
         self.md = gen.md
     
 
@@ -32,8 +32,9 @@ def get_signals_str(node: "WbNode") -> str:
 
 class BusMdGeneratorHelper:
 
-    def __init__(self, bus: 'WbBus'):
+    def __init__(self, bus: 'WbBus', graph_filename: "str|None"):
         self.bus = bus
+        self.graph_filename = graph_filename
 
         self.generate()
 
@@ -48,6 +49,14 @@ class BusMdGeneratorHelper:
         md.append('==========')
         md.append('')
         md.append('')
+
+        if self.graph_filename is not None:
+            md.append('## Overview')
+            md.append('')
+            md.append(f'<img src="{self.graph_filename}" />')
+            md.append('')
+            md.append('')
+
         md.append('## Masters')
         md.append('')
 
