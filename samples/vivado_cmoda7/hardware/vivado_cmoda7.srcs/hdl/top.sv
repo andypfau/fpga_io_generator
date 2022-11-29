@@ -81,16 +81,15 @@ wishbone #(.ADR_BITS(16), .PORT_SIZE(16), .GRANULARITY(8)) pwm_wbs();
 wishbone #(.ADR_BITS(16), .PORT_SIZE(32), .GRANULARITY(8)) sweep_wbs();
 
 
-// wb_bus wb_bus_inst (
-wb_crossbar wb_crossbar_inst (
+my_bus wb_bus_inst (
 	.rst_i(rst_w),
 	.clk_i(clk_i),
-	.Control_mi(ctrl_wbm),
-	.Sweep_mi(sweep_wbm),
-	.Buttons_so(btns_wbs),
-	.LEDs_so(leds_wbs),
-	.PWM_Reg_so(pwm_wbs),
-	.Sweep_Reg_so(sweep_wbs)
+	.external_io_mi(ctrl_wbm),
+	.sweep_master_mi(sweep_wbm),
+	.buttons_so(btns_wbs),
+	.leds_so(leds_wbs),
+	.pwm_reg_so(pwm_wbs),
+	.sweep_reg_so(sweep_wbs)
 );
 
 
@@ -120,8 +119,8 @@ ascii2wb #(
 leds leds_inst (
 	.rst_i(rst_w),
 	.clk_i(clk_i),
-	.ctrl_led1_flag_o(led1_o),
-	.ctrl_led2_flag_o(led2_o),
+	.control_led_1_flag_o(led1_o),
+	.control_led_2_flag_o(led2_o),
 	.wb_s(leds_wbs)
 );
 

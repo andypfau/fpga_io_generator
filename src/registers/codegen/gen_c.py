@@ -408,7 +408,7 @@ class RegisterCGeneratorHelper:
             self.code_private_funcs.append(f'void _write_{fn_name(self.reg_name)}({self.f_type} value, int hold_cyc)')
             self.code_private_funcs.append('{')
             self.code_private_funcs.append(f'\t{self.format.write_func}({self.r_addr_const}, value, hold_cyc);')
-            if self.r_shadow_read:
+            if self.r_shadow_write or self.r_shadow_read:
                 self.code_private_funcs.append(f'\t{self.r_shadow_var} = value;')
                 self.code_private_funcs.append(f'\t{self.r_dirty_var} = 0;')
             self.code_private_funcs.append('}')
@@ -419,9 +419,10 @@ class RegisterCGeneratorHelper:
             self.code_private_funcs.append(f'void _write_{fn_name(self.reg_name)}_masked({self.f_type} value, int mask)')
             self.code_private_funcs.append('{')
             self.code_private_funcs.append(f'\t{self.format.write_masked_func}({self.r_addr_const}, value, mask);')
-            self.code_private_funcs.append(f'\tfor (int b = 0; b < {self.registers.port_size//8}; b++)')
-            self.code_private_funcs.append(f'\t\tif (mask&(1<<b))')
-            self.code_private_funcs.append(f'\t\t\t{self.r_shadow_var} = ({self.r_shadow_var} & ~(0xFF<<(8*b))) | (value & (0xFF<<(8*b)));')
+            if self.r_shadow_write or self.r_shadow_read:
+                self.code_private_funcs.append(f'\tfor (int b = 0; b < {self.registers.port_size//8}; b++)')
+                self.code_private_funcs.append(f'\t\tif (mask&(1<<b))')
+                self.code_private_funcs.append(f'\t\t\t{self.r_shadow_var} = ({self.r_shadow_var} & ~(0xFF<<(8*b))) | (value & (0xFF<<(8*b)));')
             self.code_private_funcs.append('}')
             self.code_private_funcs.append('')
 
@@ -430,7 +431,7 @@ class RegisterCGeneratorHelper:
             self.code_private_funcs.append(f'{self.f_type} _read_{fn_name(self.reg_name)}(int hold_cyc)')
             self.code_private_funcs.append('{')
             self.code_private_funcs.append(f'\t{self.f_type} value = {self.format.read_func}({self.r_addr_const}, hold_cyc);')
-            if self.r_shadow_write:
+            if self.r_shadow_write or self.r_shadow_read:
                 self.code_private_funcs.append(f'\t{self.r_shadow_var} = value;')
                 self.code_private_funcs.append(f'\t{self.r_dirty_var} = 0;')
             self.code_private_funcs.append(f'\treturn value;')

@@ -32,11 +32,11 @@ wire range_access_strobe_w;
 sweep_reg reg_inst (
 	.rst_i(rst_i),
 	.clk_i(clk_i),
-	.ctrl2_access_strobe_o(range_access_strobe_w),
-	.ctrl1_en_flag_o(sweep_en_w),
-	.ctrl1_delay_field_o(delay_w),
-	.ctrl2_incr_field_o(incr_w),
-	.ctrl2_max_field_o(max_w),
+	.control_1_access_strobe_o(range_access_strobe_w),
+	.control_1_en_flag_o(sweep_en_w),
+	.control_1_delay_field_o(delay_w),
+	.control_2_incr_field_o(incr_w),
+	.control_2_max_field_o(max_w),
 	.wb_s(wb_s)
 );
 

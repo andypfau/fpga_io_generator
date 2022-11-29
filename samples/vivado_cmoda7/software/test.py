@@ -1,6 +1,6 @@
 from buttons import Buttons
-from pwm_gen import PwmGen
-from sweep_gen import SweepGen
+from pwm_reg import PwmReg
+from sweep_reg import SweepReg
 from leds import Leds
 from serialcomm import SerialComm
 import time
@@ -12,16 +12,18 @@ PORTNAME = 'COM11'
 
 com = SerialComm(PORTNAME, verbose=False)
 buttons = Buttons(com)
-sweep = SweepGen(com)
+sweep = SweepReg(com)
 leds = Leds(com)
-pwm = PwmGen(com)
+pwm = PwmReg(com)
 
 
-# for i in range(9999999):
-#     leds.set_control_led_1_masked(True if i % 2 == 0 else False)
-#     leds.set_control_led_2_masked(True if i % 2 != 0 else False)
-#     print(f'Buttons: {buttons.get_buttons_btn1()}, {buttons.get_buttons_btn2()}')
-#     time.sleep(0.2)
+i = 0
+while True:
+    leds.set_control_led_1_masked(True if i % 2 == 0 else False)
+    leds.set_control_led_2_masked(True if i % 2 != 0 else False)
+    print(f'Buttons: {buttons.get_buttons_btn1()}, {buttons.get_buttons_btn2()}')
+    time.sleep(0.2)
+    i += 1
 
 leds.set_control_led_1_masked(True)
 leds.set_control_led_2_masked(False)

@@ -326,27 +326,28 @@ class RegisterPyGeneratorHelper:
 
         if self.r_writable:
             self.code_private_funcs.append(f'\t# Internal function to write to field <{self.field_name}>')
-            self.code_private_funcs.append(f'\tdef _write_{fn_name(self.reg_name)}(self, value:int, hold_cyc:bool=False):')
+            self.code_private_funcs.append(f'\tdef _write_{fn_name(self.reg_name)}(self, value: int, hold_cyc: bool = False):')
             self.code_private_funcs.append(f'\t\t{self.write_func}({self.r_addr_const}, value, hold_cyc)')
-            if self.r_shadow_read:
+            if self.r_shadow_write or self.r_shadow_read:
                 self.code_private_funcs.append(f'\t\t{self.r_shadow_var} = value')
                 self.code_private_funcs.append(f'\t\t{self.r_dirty_var} = False')
             self.code_private_funcs.append('')
 
         if self.r_writable and not self.r_strobed:
             self.code_private_funcs.append(f'\t# Internal function to do a masked write to field <{self.field_name}>')
-            self.code_private_funcs.append(f'\tdef _write_{fn_name(self.reg_name)}_masked(self, value:int, mask:int):')
+            self.code_private_funcs.append(f'\tdef _write_{fn_name(self.reg_name)}_masked(self, value: int, mask: int):')
             self.code_private_funcs.append(f'\t\t{self.write_masked_func}({self.r_addr_const}, value, mask)')
-            self.code_private_funcs.append(f'\t\tfor b in range(0, {self.registers.port_size//8}):')
-            self.code_private_funcs.append(f'\t\t\tif mask&(1<<b):')
-            self.code_private_funcs.append(f'\t\t\t\t{self.r_shadow_var} = ({self.r_shadow_var} & ~(0xFF<<(8*b))) | (value & (0xFF<<(8*b)))')
+            if self.r_shadow_write or self.r_shadow_read:
+                self.code_private_funcs.append(f'\t\tfor b in range({self.registers.port_size//8}):')
+                self.code_private_funcs.append(f'\t\t\tif mask&(1<<b):')
+                self.code_private_funcs.append(f'\t\t\t\t{self.r_shadow_var} = ({self.r_shadow_var} & ~(0xFF<<(8*b))) | (value & (0xFF<<(8*b)))')
             self.code_private_funcs.append('')
 
         if self.r_readable:
             self.code_private_funcs.append(f'\t# Internal function to read from field <{self.field_name}>')
-            self.code_private_funcs.append(f'\tdef _read_{fn_name(self.reg_name)}(self, hold_cyc:bool=False) -> int:')
+            self.code_private_funcs.append(f'\tdef _read_{fn_name(self.reg_name)}(self, hold_cyc: bool = False) -> int:')
             self.code_private_funcs.append(f'\t\tvalue = {self.read_func}({self.r_addr_const}, hold_cyc)')
-            if self.r_shadow_write:
+            if self.r_shadow_write or self.r_shadow_read:
                 self.code_private_funcs.append(f'\t\t{self.r_shadow_var} = value')
                 self.code_private_funcs.append(f'\t\t{self.r_dirty_var} = False')
             self.code_private_funcs.append(f'\t\treturn value')

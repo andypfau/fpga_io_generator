@@ -102,26 +102,26 @@ if __name__ == '__main__':
     
     # And we create a bus from all of those components
     # Note that adding the slaves to the bus will assign base addresses to the slaves
-    b = WbBus('My Bus', [m_ctr, m_swp], [s_rpm, s_led, s_swp, s_btn, s_dbg])
+    b = WbBus('My Bus', [m_ctr, m_swp], [s_rpm, s_led, s_swp, s_btn])
 
     
     py_fmt = RegisterPyGenerator.Format(
         read_func='read_reg',
         write_func='write_reg',
-        write_masked_func='write_reg',
+        write_masked_func='write_reg_masked',
         accessor_obj=True,
         import_clauses=[])
     
     for regset in [r_pwm, r_led, r_swp, r_btn, r_dbg]:
         code_name = regset.name.lower().replace(' ', '_')
-        RegisterSvGenerator(regset).save(filename_code=f'{DIR}/hardware/remote_if_demo.srcs/hdl/{code_name}.sv')
+        RegisterSvGenerator(regset).save(filename_code=f'{DIR}/hardware/vivado_cmoda7.srcs/hdl/{code_name}.sv')
         RegisterPyGenerator(regset, format=py_fmt).save(f'{DIR}/software/{code_name}.py')
         RegisterMdGenerator(regset).save(f'{DIR}/docs/{code_name}.md')
-    BusSvGenerator(b).save(filename_code=f'{DIR}/hardware/remote_if_demo.srcs/hdl/wb_bus.sv')
+    BusSvGenerator(b).save(filename_code=f'{DIR}/hardware/vivado_cmoda7.srcs/hdl/wb_bus.sv')
     BusGraphGenerator(b).save(f'{DIR}/docs/bus.png')
     BusMdGenerator(b, graph_filename=f'bus.png').save(f'{DIR}/docs/bus.md')
 
     # copy some include-files
-    shutil.copy(f'{workdir()}/../include/wb_interface.sv', f'{DIR}/hardware/remote_if_demo.srcs/hdl')
-    shutil.copy(f'{workdir()}/../include/wb_arbiter.sv', f'{DIR}/hardware/remote_if_demo.srcs/hdl')
-    shutil.copy(f'{workdir()}/../include/wb_adapter.sv', f'{DIR}/hardware/remote_if_demo.srcs/hdl')
+    shutil.copy(f'{workdir()}/../include/wb_interface.sv', f'{DIR}/hardware/vivado_cmoda7.srcs/hdl')
+    shutil.copy(f'{workdir()}/../include/wb_arbiter.sv', f'{DIR}/hardware/vivado_cmoda7.srcs/hdl')
+    shutil.copy(f'{workdir()}/../include/wb_adapter.sv', f'{DIR}/hardware/vivado_cmoda7.srcs/hdl')

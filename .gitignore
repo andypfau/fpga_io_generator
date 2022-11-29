@@ -6,16 +6,16 @@ samples/vivado_cmoda7/docs/*
 samples/vivado_cmoda7/software/buttons.py
 samples/vivado_cmoda7/software/debug.py
 samples/vivado_cmoda7/software/leds.py
-samples/vivado_cmoda7/software/pwm_rg.py
+samples/vivado_cmoda7/software/pwm_reg.py
 samples/vivado_cmoda7/software/sweep_reg.py
-samples/vivado_cmoda7/hardware/remote_if_demo.srcs/hdl/buttons.sv
-samples/vivado_cmoda7/hardware/remote_if_demo.srcs/hdl/debug.sv
-samples/vivado_cmoda7/hardware/remote_if_demo.srcs/hdl/pwm_reg.sv
-samples/vivado_cmoda7/hardware/remote_if_demo.srcs/hdl/leds.sv
-samples/vivado_cmoda7/hardware/remote_if_demo.srcs/hdl/sweep_reg.sv
+samples/vivado_cmoda7/hardware/vivado_cmoda7.srcs/hdl/buttons.sv
+samples/vivado_cmoda7/hardware/vivado_cmoda7.srcs/hdl/debug.sv
+samples/vivado_cmoda7/hardware/vivado_cmoda7.srcs/hdl/pwm_reg.sv
+samples/vivado_cmoda7/hardware/vivado_cmoda7.srcs/hdl/leds.sv
+samples/vivado_cmoda7/hardware/vivado_cmoda7.srcs/hdl/sweep_reg.sv
 
 # provided via include-files
-samples/vivado_cmoda7/hardware/remote_if_demo.srcs/hdl/wb_adapter.sv
-samples/vivado_cmoda7/hardware/remote_if_demo.srcs/hdl/wb_arbiter.sv
-samples/vivado_cmoda7/hardware/remote_if_demo.srcs/hdl/wb_bus.sv
-samples/vivado_cmoda7/hardware/remote_if_demo.srcs/hdl/wb_interface.sv
+samples/vivado_cmoda7/hardware/vivado_cmoda7.srcs/hdl/wb_adapter.sv
+samples/vivado_cmoda7/hardware/vivado_cmoda7.srcs/hdl/wb_arbiter.sv
+samples/vivado_cmoda7/hardware/vivado_cmoda7.srcs/hdl/wb_bus.sv
+samples/vivado_cmoda7/hardware/vivado_cmoda7.srcs/hdl/wb_interface.sv
