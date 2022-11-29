@@ -23,7 +23,7 @@ if __name__ == '__main__':
 
 
     # register to control the RGB-LEDs via PWM
-    r_pwm = RegisterSet('PWM Gen', 0x00, 16, [
+    r_pwm = RegisterSet('PWM Reg', 0x00, 16, [
         Register('Red', 'PWM config for red', ..., RegType.Write, [
             Field('Value', 'PWM value', [9,0], FieldType.Unsigned16Bit, FieldFunction.Overwrite)
         ]),
@@ -44,7 +44,7 @@ if __name__ == '__main__':
     ])
     
     # register to configure the automatic sweep controller
-    r_swp = RegisterSet('Sweep Gen', 0x20, 32, [
+    r_swp = RegisterSet('Sweep Reg', 0x20, 32, [
         Register('Control 1', 'Sweep config 1 (enable and delay)', ..., RegType.Write, write_event=WriteEventType.StrobeAfterWriteOnCycleEnd, fields=[
             Field('En', 'Enable PWM sweep', [0], FieldType.Boolean, FieldFunction.WriteShadow, default=0,
                 comment='If sweeping is disabled, you can still control the PWM by configuring it directly'),
