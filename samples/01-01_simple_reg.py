@@ -53,7 +53,7 @@ if __name__ == '__main__':
 
 
     # Now we generate SystemVerilog code from that
-    sv = RegisterSvGenerator(regset, modulename='my_registers')
+    sv = RegisterSvGenerator(regset)
     sv_inst = sv.get_instance_template_code()
     sv_impl = sv.get_code()
 
