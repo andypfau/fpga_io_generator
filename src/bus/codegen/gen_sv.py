@@ -116,20 +116,21 @@ class BusSvGeneratorHelper:
         impl.append(f'')
         impl.append(f'')
 
-        impl.append(f'/////////////////////////////////////////////////////////////')
-        impl.append(f'// common bus')
-        impl.append(f'')
-        impl.append(f'')
-        impl.append(f'logic[{bus_adr_hi}:{bus_adr_lo}] bus_adr_l;')
-        impl.append(f'logic[{bus_port_size-1}:0] bus_dat_ms_l;')
-        impl.append(f'logic[{bus_port_size-1}:0] bus_dat_sm_l;')
-        impl.append(f'logic[{bus_sel_hi}:0] bus_sel_l;')
-        impl.append(f'logic bus_stb_l;')
-        impl.append(f'logic bus_cyc_l;')
-        impl.append(f'logic bus_we_l;')
-        impl.append(f'logic bus_ack_l;')
-        impl.append(f'logic bus_err_l;')
-        impl.append(f'logic bus_rty_l;')
+        if self.bus.topology == WbBusTopology.SharedBus:
+            impl.append(f'/////////////////////////////////////////////////////////////')
+            impl.append(f'// common bus')
+            impl.append(f'')
+            impl.append(f'')
+            impl.append(f'logic[{bus_adr_hi}:{bus_adr_lo}] bus_adr_l;')
+            impl.append(f'logic[{bus_port_size-1}:0] bus_dat_ms_l;')
+            impl.append(f'logic[{bus_port_size-1}:0] bus_dat_sm_l;')
+            impl.append(f'logic[{bus_sel_hi}:0] bus_sel_l;')
+            impl.append(f'logic bus_stb_l;')
+            impl.append(f'logic bus_cyc_l;')
+            impl.append(f'logic bus_we_l;')
+            impl.append(f'logic bus_ack_l;')
+            impl.append(f'logic bus_err_l;')
+            impl.append(f'logic bus_rty_l;')
 
         adapter_decls = []
         adapter_impls = []
@@ -347,6 +348,8 @@ class BusSvGeneratorHelper:
                 slave_adr_lo += 1
             impl.append(f'// {slave_adr_mask=:x}')
 
+            # TODO: address_slice_* and local_address_slice_* seem to be wrong 
+
             impl.append(f'/////////////////////////////////////////////////////////////')
             impl.append(f'// crossbar matrix')
             impl.append(f'')
@@ -358,7 +361,7 @@ class BusSvGeneratorHelper:
             impl.append(f'localparam local_address_slice_low = {bus_adr_lo};')
             impl.append(f'')
             for slave in self.bus.slaves:
-                impl.append(f'localparam address_{slave.name} = {slave_adr_hi-slave_adr_lo+1}\'h{(slave.get_base_address() & slave_adr_mask)>>slave_adr_lo};')
+                impl.append(f'localparam address_{signal_name(slave.name)} = {slave_adr_hi-slave_adr_lo+1}\'h{(slave.get_base_address() & slave_adr_mask)>>slave_adr_lo};')
             impl.append(f'')
             impl.append(f'')
             impl.append(f'// arbiter')
@@ -369,7 +372,7 @@ class BusSvGeneratorHelper:
             impl.append(f'logic master_cyc_w[{n_masters-1}:0];')
             impl.append(f'logic[address_size-1:0] master_adr_w[{n_masters-1}:0];')
             impl.append(f'logic[address_size-1:0] slave_addresses_w[{n_slaves-1}:0];')
-            impl.append(f'logic master_grant_w[1{n_masters-1}:0];')
+            impl.append(f'logic master_grant_w[{n_masters-1}:0];')
             impl.append(f'logic[{n_slaves-1}:0] master_ssel_w[{n_masters-1}:0];')
             impl.append(f'')
 
@@ -378,14 +381,14 @@ class BusSvGeneratorHelper:
             for i,master in enumerate(self.bus.masters):
                 impl.append(f'assign master_adr_w[{i}] = {adapted_names[master.name]}.adr[address_slice_high:address_slice_low];')
             for i,slave in enumerate(self.bus.slaves):
-                impl.append(f'assign slave_addresses_w[{i}] = address_{slave.name};')
+                impl.append(f'assign slave_addresses_w[{i}] = address_{signal_name(slave.name)};')
             impl.append(f'')
             impl.append(f'wb_crossbar_arbiter #(')
             impl.append(f'\t.master_count({n_masters}),')
             impl.append(f'\t.slave_count({n_slaves}),')
             impl.append(f'\t.address_bits({slave_adr_hi-slave_adr_lo+1})')
             impl.append(f') wb_crossbar_arbiter_inst (')
-            impl.append(f'\t.clk_i(clk_i)'),
+            impl.append(f'\t.clk_i(clk_i),'),
             impl.append(f'\t.rst_i(rst_i),')
             impl.append(f'\t.master_cyc_i(master_cyc_w),')
             impl.append(f'\t.master_adr_i(master_adr_w),')
@@ -404,14 +407,23 @@ class BusSvGeneratorHelper:
             for i,master in enumerate(self.bus.masters):
                 impl.append(f'assign {adapted_names[master.name]}_ssel_w = master_ssel_w[{i}];')
 
+            impl.append('')
             impl.append(f'// mux logic')
             impl.append(f'// need an explicit sensitivity list, all other approaches make ModelSim crash or throw errors...')
-            impl.append(f'always @(')
+
+            senslist = []
             for master in self.bus.masters:
-                impl.append(f'\t{adapted_names[master.name]}.adr, {adapted_names[master.name]}.dat_ms, {adapted_names[master.name]}.sel, {adapted_names[master.name]}.stb, {adapted_names[master.name]}.cyc, {adapted_names[master.name]}.we,')
+                senslist.append(f'{adapted_names[master.name]}.adr, {adapted_names[master.name]}.dat_ms')
+                senslist.append(f'{adapted_names[master.name]}.sel, {adapted_names[master.name]}.stb')
+                senslist.append(f'{adapted_names[master.name]}.cyc, {adapted_names[master.name]}.we')
             for slave in self.bus.slaves:
-                impl.append(f'\t{adapted_names[slave.name]}.dat_sm, {adapted_names[slave.name]}.ack, {adapted_names[slave.name]}.err, {adapted_names[slave.name]}.rty,')
-            impl.append(f'\tcontrol_grant_w, sweep_grant_w, control_ssel_w, sweep_ssel_w) begin')
+                senslist.append(f'{adapted_names[slave.name]}.dat_sm, {adapted_names[slave.name]}.ack')
+                senslist.append(f'{adapted_names[slave.name]}.err, {adapted_names[slave.name]}.rty')
+            for master in self.bus.masters:
+                senslist.append(f'{adapted_names[master.name]}_grant_w, {adapted_names[master.name]}_ssel_w')
+            sensitivity = ',\n\t'.join(senslist)
+            impl.append(f'always @({sensitivity}) begin')
+            
             impl.append(f'\t')
             impl.append(f'\t// default assignments for idle masters/slaves')
             for master in self.bus.masters:
@@ -430,21 +442,21 @@ class BusSvGeneratorHelper:
             impl.append(f'')
             impl.append(f'\t// multiplexer')
             for master in self.bus.masters:
-                impl.append(f'\tif ({adapted_names[master.name]}) begin')
-            for i,slave in enumerate(self.bus.slaves):
-                impl.append(f'\t\t{"end else " if i>0 else ""}if ({adapted_names[master.name]}_ssel_w[{i}]) begin')
-                impl.append(f'\t\t\t{adapted_names[slave.name]}.adr[local_address_slice_high:local_address_slice_low] <= {adapted_names[master.name]}.adr[local_address_slice_high:local_address_slice_low];')
-                impl.append(f'\t\t\t{adapted_names[slave.name]}.dat_ms <= {adapted_names[master.name]}.dat_ms;')
-                impl.append(f'\t\t\t{adapted_names[slave.name]}.sel <= {adapted_names[master.name]}.sel;')
-                impl.append(f'\t\t\t{adapted_names[slave.name]}.stb <= {adapted_names[master.name]}.stb;')
-                impl.append(f'\t\t\t{adapted_names[slave.name]}.cyc <= {adapted_names[master.name]}.cyc;')
-                impl.append(f'\t\t\t{adapted_names[slave.name]}.we <= {adapted_names[master.name]}.we;')
-                impl.append(f'\t\t\t{adapted_names[master.name]}.dat_sm <= {adapted_names[slave.name]}.dat_sm;')
-                impl.append(f'\t\t\t{adapted_names[master.name]}.ack <= {adapted_names[slave.name]}.ack;')
-                impl.append(f'\t\t\t{adapted_names[master.name]}.err <= {adapted_names[slave.name]}.err;')
-                impl.append(f'\t\t\t{adapted_names[master.name]}.rty <= {adapted_names[slave.name]}.rty;')
-            impl.append(f'\t\tend')
-            impl.append(f'\tend')
+                impl.append(f'\tif ({adapted_names[master.name]}_grant_w) begin')
+                for i,slave in enumerate(self.bus.slaves):
+                    impl.append(f'\t\t{"end else " if i>0 else ""}if ({adapted_names[master.name]}_ssel_w[{i}]) begin')
+                    impl.append(f'\t\t\t{adapted_names[slave.name]}.adr[local_address_slice_high:local_address_slice_low] <= {adapted_names[master.name]}.adr[local_address_slice_high:local_address_slice_low];')
+                    impl.append(f'\t\t\t{adapted_names[slave.name]}.dat_ms <= {adapted_names[master.name]}.dat_ms;')
+                    impl.append(f'\t\t\t{adapted_names[slave.name]}.sel <= {adapted_names[master.name]}.sel;')
+                    impl.append(f'\t\t\t{adapted_names[slave.name]}.stb <= {adapted_names[master.name]}.stb;')
+                    impl.append(f'\t\t\t{adapted_names[slave.name]}.cyc <= {adapted_names[master.name]}.cyc;')
+                    impl.append(f'\t\t\t{adapted_names[slave.name]}.we <= {adapted_names[master.name]}.we;')
+                    impl.append(f'\t\t\t{adapted_names[master.name]}.dat_sm <= {adapted_names[slave.name]}.dat_sm;')
+                    impl.append(f'\t\t\t{adapted_names[master.name]}.ack <= {adapted_names[slave.name]}.ack;')
+                    impl.append(f'\t\t\t{adapted_names[master.name]}.err <= {adapted_names[slave.name]}.err;')
+                    impl.append(f'\t\t\t{adapted_names[master.name]}.rty <= {adapted_names[slave.name]}.rty;')
+                impl.append(f'\t\tend')
+                impl.append(f'\tend')
 
             impl.append(f'end')
 

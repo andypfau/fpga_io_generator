@@ -114,3 +114,8 @@ Generated C-code:
 Generated Markdown documentation:
 
 <img src="./doc/demo_01-03_md.png" style="margin-left: 2em; max-height: 25ex;" />
+
+
+## Missing Features
+
+- The crossbar does not work yet
