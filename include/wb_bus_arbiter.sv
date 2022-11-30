@@ -1,7 +1,7 @@
 // generic Wishbone multi-master arbiter
 
 
-module wb_arbiter #(
+module wb_bus_arbiter #(
     
     parameter N = 2 // number of masters to arbitrate
     

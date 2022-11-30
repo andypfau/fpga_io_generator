@@ -221,7 +221,7 @@ class BusSvGeneratorHelper:
                 impl.append(f'wire[{len(self.bus.masters)-1}:0] arbiter_grant_w;')
                 impl.append(f'')
                 impl.append(f'')
-                impl.append(f'wb_arbiter #(')
+                impl.append(f'wb_bus_arbiter #(')
                 impl.append(f'\t.N({len(self.bus.masters)})')
                 impl.append(f') arbiter_inst (')
                 impl.append(f'    .clk_i(clk_i),')

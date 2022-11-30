@@ -102,7 +102,7 @@ if __name__ == '__main__':
     
     # And we create a bus from all of those components
     # Note that adding the slaves to the bus will assign base addresses to the slaves
-    b = WbBus('My Bus', [m_ctr, m_swp], [s_rpm, s_led, s_swp, s_btn])
+    b = WbBus('My Bus', [m_ctr, m_swp], [s_rpm, s_led, s_swp, s_btn], WbBusTopology.SharedBus)
 
     
     py_fmt = RegisterPyGenerator.Format(
@@ -123,5 +123,6 @@ if __name__ == '__main__':
 
     # copy some include-files
     shutil.copy(f'{workdir()}/../include/wb_interface.sv', f'{DIR}/hardware/vivado_cmoda7.srcs/hdl')
-    shutil.copy(f'{workdir()}/../include/wb_arbiter.sv', f'{DIR}/hardware/vivado_cmoda7.srcs/hdl')
+    shutil.copy(f'{workdir()}/../include/wb_bus_arbiter.sv', f'{DIR}/hardware/vivado_cmoda7.srcs/hdl')
+    shutil.copy(f'{workdir()}/../include/wb_crossbar_arbiter.sv', f'{DIR}/hardware/vivado_cmoda7.srcs/hdl')
     shutil.copy(f'{workdir()}/../include/wb_adapter.sv', f'{DIR}/hardware/vivado_cmoda7.srcs/hdl')

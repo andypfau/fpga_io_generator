@@ -1,6 +1,6 @@
 #!/bin/bash
 
-for pyfile in *.py;
+for pyfile in ../samples/*.py;
 do
     echo "Running demo <$pyfile>..."
     python $pyfile
