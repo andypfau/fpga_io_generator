@@ -87,10 +87,10 @@ class BusSvGeneratorHelper:
         impl.append(f'')
         impl.append(f'// masters:')
         for master in self.bus.masters:
-            impl.append(f'//     {master.name}')
+            impl.append(f'// - {master.name} (width {master.port_size} b, granularity {master.granularity} b, addres {master.address_size} b)')
         impl.append(f'// slaves:')
         for slave in self.bus.slaves:
-            impl.append(f'//     0x{slave.get_base_address():08X}: {slave.name}')
+            impl.append(f'// - 0x{slave.get_base_address():08X}: {slave.name} (width {slave.port_size} b, granularity {slave.granularity} b, address {slave.address_size} b)')
         impl.append(f'')
         impl.append(f'')
         impl.append(f'module {module_name(self.bus.name)} (')
@@ -137,18 +137,17 @@ class BusSvGeneratorHelper:
         def adapt(components:"WbNode", is_master:bool):
             adapted_names = {}
             for component in components:
-                if component.port_size==bus_port_size and component.granularity==bus_granularity:
-                    # can be connected directly
+                if self.bus.get_adapter(component) is None: # can be connected directly
                     suffix = '_mi' if is_master else '_so'
                     adapted_names[component.name] = signal_name(component.name) + suffix
                 else: # need adapter
-                    n = signal_name(component.name) + '_adapted_w'
-                    adapted_names[component.name] = n
+                    comp_name = signal_name(component.name) + '_adapted_w'
+                    adapted_names[component.name] = comp_name
                     if is_master:
-                        a,p,g = bus_address_size, bus_port_size, bus_granularity
+                        comp_addr_size, comp_port_size, comp_gran = bus_address_size, bus_port_size, bus_granularity
                     else:
-                        a,p,g = component.address_size, component.port_size, component.granularity
-                    adapter_decls.append(f'wishbone #(.ADR_BITS({a}), .PORT_SIZE({p}), .GRANULARITY({g})) {n}();')
+                        comp_addr_size, comp_port_size, comp_gran = component.address_size, component.port_size, component.granularity
+                    adapter_decls.append(f'wishbone #(.ADR_BITS({comp_addr_size}), .PORT_SIZE({comp_port_size}), .GRANULARITY({comp_gran})) {comp_name}();')
                     adapter_impls.append(f'')
                     adapter_impls.append(f'wb_adapter #(')
                     if is_master:
@@ -160,7 +159,7 @@ class BusSvGeneratorHelper:
                         adapter_impls.append(f'\t.SLAVE_GRANULARITY({bus_granularity})')
                         adapter_impls.append(f') wb_adapter_bus_to_slave_{module_name(component.name)} (')
                         adapter_impls.append(f'\t.master_m({module_name(component.name)}_mi),')
-                        adapter_impls.append(f'\t.slave_s({n})')
+                        adapter_impls.append(f'\t.slave_s({comp_name})')
                     else:
                         adapter_impls.append(f'\t.MASTER_ADR_BITS({bus_address_size}),')
                         adapter_impls.append(f'\t.MASTER_PORT_SIZE({bus_port_size}),')
@@ -169,7 +168,7 @@ class BusSvGeneratorHelper:
                         adapter_impls.append(f'\t.SLAVE_PORT_SIZE({component.port_size}),')
                         adapter_impls.append(f'\t.SLAVE_GRANULARITY({component.granularity})')
                         adapter_impls.append(f') wb_adapter_slave_{module_name(component.name)}_to_bus (')
-                        adapter_impls.append(f'\t.master_m({n}),')
+                        adapter_impls.append(f'\t.master_m({comp_name}),')
                         adapter_impls.append(f'\t.slave_s({module_name(component.name)}_so)')
                     adapter_impls.append(f');')
             return adapted_names
@@ -346,7 +345,8 @@ class BusSvGeneratorHelper:
             slave_adr_lo = 1
             while slave_adr_mask & (1<<slave_adr_lo) == 0:
                 slave_adr_lo += 1
-            impl.append(f'// {slave_adr_mask=:x}')
+            
+            impl.append(f'// DEBUG: slave_adr_mask=0x{slave_adr_mask:X}')
 
             # TODO: address_slice_* and local_address_slice_* seem to be wrong 
 
