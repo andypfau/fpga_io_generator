@@ -15,6 +15,7 @@ In the following FPGA block diagram, the parts highlighted in color can be gener
 
 <img src="./doc/blockdiagram_01.png" style="margin-left: 2em" />
 
+
 You can describe the registers and the bus in Python code; in simplified pseudo-code, this could look like this:
 
     m = WbMaster('External I/O', 32, 8, 16)
@@ -64,18 +65,23 @@ Synthesizable SystemVerilog code:
 ### Bus Generation
 
 Generated graph:
+
 <img src="./doc/demo_02-04_gv.png" style="margin-left: 2em; max-height: 25ex;" />
 
 Generated Markdown documentation:
+
 <img src="./doc/demo_02-04_md.png" style="margin-left: 2em; max-height: 25ex;" />
 
 ### Register Generation
 
 Generated SystemVerilog code:
+
 <img src="./doc/demo_01-03_sv.png" style="margin-left: 2em; max-height: 25ex;" />
 
 Generated C-code:
+
 <img src="./doc/demo_01-03_h.png" style="margin-left: 2em; max-height: 25ex;" />
 
 Generated Markdown documentation:
+
 <img src="./doc/demo_01-03_md.png" style="margin-left: 2em; max-height: 25ex;" />
