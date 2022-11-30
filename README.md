@@ -39,6 +39,11 @@ Now the FPGA I/O Generator is able to generate various outputs:
 - Graphical represenations of the bus
 - Markdown documentation for the registers and for the bus
 
+
+### Notes on WISHBONE
+
+The generated HDL code makes use of the SystemVerilog `interface` mechanism to simplify the code. The generated code might not be 100% WISHBONE compliant.
+
 For more information about the WISHBONE SoC interconnect architecture, see [opencores.org/howto/wishbone](https://opencores.org/howto/wishbone).
 
 
