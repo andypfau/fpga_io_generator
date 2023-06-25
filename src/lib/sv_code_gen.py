@@ -119,7 +119,7 @@ class SvAlwaysFf(SvCodeFormatter):
         rst_edge = "posedge" if rst_active_high else "negedge"
         clk_edge = "posedge" if clk_rising else "negedge"
         if rst:
-            alwaysff = f'always_ff @({rst_edge} {rst} or {clk_edge} {clk}) begin'
+            alwaysff = f'always_ff @({rst_edge} {rst} or {clk_edge} {clk})'
             resetif = f'if ({"" if rst_active_high else "~"}{rst}) begin'
         else:
             alwaysff = f'always_ff @({clk_edge} {clk}) begin'
