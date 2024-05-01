@@ -106,7 +106,7 @@ class RegisterSvGeneratorHelper:
         templ.blank()
         templ.add(f'wishbone #(.ADR_BITS({addr_hi+1}), .PORT_SIZE({self.registers.port_size}), .GRANULARITY({8})) __INTERFACE_PLACEHOLDER__();')
         templ.blank()
-        templ_inst = templ.instance(module_name(self.registers.name), '__INSTANCE_PLACEHOLDER__', clk_port='rst_i', rst_port='rst_i')
+        templ_inst = templ.instance(module_name(self.registers.name), '__INSTANCE_PLACEHOLDER__', clk_port='clk_i', rst_port='rst_i')
 
         if self.has_any_strobed_regs():
             for reg in self.registers.registers:
